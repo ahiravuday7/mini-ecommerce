@@ -3,20 +3,6 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { fetchProductById } from "../api/products.api";
 import { addToCart } from "../api/cart.api";
 
-const cardStyle = {
-  border: "1px solid #eee",
-  borderRadius: 14,
-  overflow: "hidden",
-  background: "white",
-};
-
-const inputStyle = {
-  padding: "10px 12px",
-  border: "1px solid #ddd",
-  borderRadius: 10,
-  outline: "none",
-};
-
 export default function ProductDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -65,7 +51,7 @@ export default function ProductDetails() {
 
       await addToCart({ productId: id, qty }); // Sends the API request to add the specific product (id) and the selected quantity (qty) to the backend, waiting for it to finish.
 
-      setActionMsg("Added to cart ✅"); // success message
+      setActionMsg("Added to cart"); // success message
       // go to cart after a moment
       setTimeout(() => navigate("/cart"), 600);
     } catch (e) {
@@ -85,152 +71,127 @@ export default function ProductDetails() {
     }
   };
 
-  if (loading) return <div>Loading product...</div>;
-  if (error) return <div style={{ color: "crimson" }}>{error}</div>;
-  if (!p) return <div>Product not found</div>;
+  if (loading) {
+    return (
+      <div className="card border-0 shadow-sm">
+        <div className="card-body d-flex align-items-center gap-2 text-secondary">
+          <div className="spinner-border spinner-border-sm" role="status" />
+          <span>Loading product...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) return <div className="alert alert-danger mb-0">{error}</div>;
+  if (!p)
+    return <div className="alert alert-secondary mb-0">Product not found</div>;
 
   return (
-    <div>
-      {/* Back to products page */}
-      <div style={{ marginBottom: 12 }}>
-        <Link to="/" style={{ textDecoration: "none" }}>
-          ← Back to products
+    <div className="py-2">
+      {/* Back to products link */}
+      <div className="mb-3">
+        <Link to="/" className="btn btn-link p-0 text-decoration-none">
+          &larr; Back to products
         </Link>
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1.1fr 0.9fr",
-          gap: 16,
-          alignItems: "start",
-        }}
-      >
-        {/* Image */}
-        <div style={cardStyle}>
-          <div style={{ height: 420, background: "#fafafa" }}>
-            <img
-              src={
-                p.image || "https://via.placeholder.com/600x400?text=No+Image"
-              }
-              alt={p.title}
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-            />
+      <div className="row g-4 align-items-start">
+        <div className="col-lg-7">
+          <div className="card border-0 shadow-sm">
+            {/* Product image */}
+            <div className="bg-light d-flex align-items-center justify-content-center p-4 product-detail-image-wrap">
+              <img
+                src={
+                  p.image || "https://via.placeholder.com/600x400?text=No+Image"
+                }
+                alt={p.title}
+                className="product-detail-image"
+              />
+            </div>
           </div>
         </div>
 
-        {/* Details */}
-        <div style={cardStyle}>
-          <div style={{ padding: 16 }}>
-            <h2 style={{ margin: "0 0 8px" }}>{p.title}</h2>
+        {/* Product details */}
+        <div className="col-lg-5">
+          <div className="card border-0 shadow-sm">
+            <div className="card-body p-4">
+              <h2 className="h3 mb-2">{p.title}</h2>
 
-            {/* eg. Nike • Shoes */}
-            <div style={{ color: "#666", marginBottom: 10 }}>
-              {p.brand ? `${p.brand} • ` : ""}
-              {p.category || "General"}
-            </div>
+              {/* eg. Nike - Shoes */}
+              <p className="text-secondary mb-2">
+                {p.brand ? `${p.brand} - ` : ""}
+                {p.category || "General"}
+              </p>
 
-            <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-              <div style={{ fontWeight: 900, fontSize: 22 }}>₹{p.price}</div>
-              {p.mrp > p.price && (
-                <div style={{ textDecoration: "line-through", color: "#999" }}>
-                  ₹{p.mrp}
-                </div>
-              )}
-            </div>
-
-            <div
-              style={{
-                marginTop: 10,
-                color: p.stock > 0 ? "#2e7d32" : "#c62828",
-              }}
-            >
-              {p.stock > 0 ? `In stock (${p.stock})` : "Out of stock"}
-            </div>
-
-            <div style={{ marginTop: 14, color: "#444", lineHeight: 1.5 }}>
-              {p.description || "No description provided."}
-            </div>
-
-            <hr
-              style={{
-                border: "none",
-                borderTop: "1px solid #eee",
-                margin: "16px 0",
-              }}
-            />
-
-            {/* Qty + Add */}
-            <div style={{ display: "grid", gap: 10 }}>
-              <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                <label style={{ minWidth: 70, color: "#555" }}>Qty</label>
-                <select
-                  style={{ ...inputStyle, width: 120 }}
-                  value={qty}
-                  onChange={(e) => setQty(Number(e.target.value))}
-                  disabled={p.stock <= 0}
-                >
-                  {qtyOptions.map((n) => (
-                    <option key={n} value={n}>
-                      {n}
-                    </option>
-                  ))}
-                </select>
+              <div className="d-flex align-items-baseline gap-2 mb-2">
+                <span className="fw-bold fs-3">{`\u20B9${p.price}`}</span>
+                {p.mrp > p.price && (
+                  <span className="text-secondary text-decoration-line-through">
+                    {`\u20B9${p.mrp}`}
+                  </span>
+                )}
               </div>
 
-              <button
-                onClick={onAddToCart}
-                disabled={p.stock <= 0 || adding}
-                style={{
-                  padding: "12px 14px",
-                  borderRadius: 12,
-                  border: "none",
-                  cursor: p.stock <= 0 || adding ? "not-allowed" : "pointer",
-                  fontWeight: 800,
-                }}
+              <div
+                className={`mb-3 ${p.stock > 0 ? "text-success" : "text-danger"}`}
               >
-                {adding ? "Adding..." : "Add to Cart"}
-              </button>
+                {p.stock > 0 ? `In stock (${p.stock})` : "Out of stock"}
+              </div>
 
+              <p className="text-body-secondary mb-4">
+                {p.description || "No description provided."}
+              </p>
+
+              <hr className="my-4" />
+
+              <div className="row g-3 align-items-end">
+                {/* Qty dropdown */}
+                <div className="col-sm-4">
+                  <label className="form-label">Qty</label>
+                  <select
+                    className="form-select"
+                    value={qty}
+                    onChange={(e) => setQty(Number(e.target.value))}
+                    disabled={p.stock <= 0}
+                  >
+                    {qtyOptions.map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Add to cart button */}
+                <div className="col-sm-8 d-grid">
+                  <button
+                    onClick={onAddToCart}
+                    disabled={p.stock <= 0 || adding}
+                    className="btn btn-primary btn-lg"
+                  >
+                    {adding ? "Adding..." : "Add to Cart"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Success/error messages */}
               {actionMsg && (
-                <div
-                  style={{
-                    background: "#f1fff3",
-                    border: "1px solid #bff0c4",
-                    padding: 10,
-                    borderRadius: 10,
-                    color: "#1b5e20",
-                  }}
-                >
+                <div className="alert alert-success mt-3 mb-0" role="alert">
                   {actionMsg}
                 </div>
               )}
+
               {actionErr && (
-                <div
-                  style={{
-                    background: "#fff3f3",
-                    border: "1px solid #ffd0d0",
-                    padding: 10,
-                    borderRadius: 10,
-                    color: "#a40000",
-                  }}
-                >
+                <div className="alert alert-danger mt-3 mb-0" role="alert">
                   {actionErr}
                 </div>
               )}
 
-              {/* if not logged in */}
+              {/* If user is not logged in, show login button */}
               {actionErr.toLowerCase().includes("login") && (
                 <button
                   onClick={() => navigate("/login")}
-                  style={{
-                    padding: "10px 14px",
-                    borderRadius: 12,
-                    border: "1px solid #ddd",
-                    cursor: "pointer",
-                    fontWeight: 700,
-                    background: "white",
-                  }}
+                  className="btn btn-outline-secondary mt-3"
                 >
                   Go to Login
                 </button>
@@ -239,15 +200,6 @@ export default function ProductDetails() {
           </div>
         </div>
       </div>
-
-      {/* Responsive small screen */}
-      <style>{`
-        @media (max-width: 900px) {
-          div[style*="grid-template-columns: 1.1fr 0.9fr"] {
-            grid-template-columns: 1fr !important;
-          }
-        }
-      `}</style>
     </div>
   );
 }

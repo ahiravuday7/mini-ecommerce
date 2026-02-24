@@ -2,14 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { fetchProducts } from "../api/products.api";
 import ProductCard from "../components/ProductCard";
 
-const inputStyle = {
-  padding: "10px 12px",
-  border: "1px solid #ddd",
-  borderRadius: 10,
-  width: "100%",
-  outline: "none",
-};
-
 export default function Home() {
   const [products, setProducts] = useState([]); // list of products from backend
   const [loading, setLoading] = useState(true); //show loader while fetching
@@ -56,72 +48,79 @@ export default function Home() {
   }, [q, category]);
 
   return (
-    <div>
-      <div style={{ marginBottom: 14 }}>
-        <h2 style={{ margin: "6px 0 2px" }}>Products</h2>
-        <div style={{ color: "#666", fontSize: 14 }}>
+    <div className="py-2">
+      <div className="mb-4">
+        <h2 className="mb-1">Products</h2>
+        <p className="text-secondary mb-0">
           Search and filter products (powered by backend API)
+        </p>
+      </div>
+
+      {/* Filters */}
+      <div className="row g-3 mb-4">
+        {/* Search */}
+        <div className="col-md-8">
+          <input
+            className="form-control"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search products (e.g. shoes, band, bottle...)"
+          />
+        </div>
+
+        {/* Category filter */}
+        <div className="col-md-4">
+          <select
+            className="form-select"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          >
+            {categories.map((c) => (
+              <option key={c || "all"} value={c}>
+                {c ? c : "All Categories"}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
-      {/* Filters */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 220px",
-          gap: 12,
-          marginBottom: 16,
-        }}
-      >
-        <input
-          style={inputStyle}
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Search products (e.g. shoes, band, bottle...)"
-        />
 
-        <select
-          style={inputStyle}
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-        >
-          {categories.map((c) => (
-            <option key={c || "all"} value={c}>
-              {c ? c : "All Categories"}
-            </option>
-          ))}
-        </select>
-      </div>
       {/* States loading, error, empty */}
-      {loading && <div>Loading products...</div>}
-      {error && (
-        <div
-          style={{
-            background: "#fff3f3",
-            border: "1px solid #ffd0d0",
-            padding: 12,
-            borderRadius: 10,
-            color: "#a40000",
-            marginBottom: 14,
-          }}
-        >
+      {loading && (
+        <div className="card border-0 shadow-sm">
+          <div className="card-body d-flex align-items-center gap-2 text-secondary">
+            <div className="spinner-border spinner-border-sm" role="status" />
+            <span>Loading products...</span>
+          </div>
+        </div>
+      )}
+
+      {error && !loading && (
+        <div className="alert alert-danger" role="alert">
           {error}
         </div>
       )}
+
       {!loading && !error && products.length === 0 && (
-        <div style={{ color: "#666" }}>No products found.</div>
+        <div className="card border-0 shadow-sm">
+          <div className="card-body text-center py-5">
+            <h5 className="mb-2">No products found</h5>
+            <p className="text-secondary mb-0">
+              Try a different search or category filter.
+            </p>
+          </div>
+        </div>
       )}
+
       {/* Grid of products */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-          gap: 14,
-        }}
-      >
-        {products.map((p) => (
-          <ProductCard key={p._id} p={p} />
-        ))}
-      </div>
+      {!loading && !error && products.length > 0 && (
+        <div className="row g-4">
+          {products.map((p) => (
+            <div className="col-sm-6 col-lg-4" key={p._id}>
+              <ProductCard p={p} />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

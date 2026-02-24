@@ -2,14 +2,6 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-const inputStyle = {
-  padding: "10px 12px",
-  border: "1px solid #ddd",
-  borderRadius: 10,
-  width: "100%",
-  outline: "none",
-};
-
 export default function Register() {
   const navigate = useNavigate();
   const { register } = useAuth();
@@ -36,77 +28,76 @@ export default function Register() {
   };
 
   return (
-    <div style={{ maxWidth: 420, margin: "0 auto" }}>
-      <h2>Create Account</h2>
-
-      {/* Error message */}
-      {error && (
-        <div
-          style={{
-            background: "#fff3f3",
-            border: "1px solid #ffd0d0",
-            padding: 10,
-            borderRadius: 10,
-            color: "#a40000",
-          }}
-        >
-          {error}
-        </div>
-      )}
-
-      {/* Form */}
-      <form
-        onSubmit={onSubmit}
-        style={{ display: "grid", gap: 12, marginTop: 12 }}
-      >
-        <div>
-          <label>Name</label>
-          <input
-            style={inputStyle}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Uday Ahirav"
-          />
+    <div className="container-fluid min-vh-100 d-flex align-items-center justify-content-center py-4">
+      <div className="row shadow-lg rounded-4 overflow-hidden login-wrapper w-100">
+        {/* Left Side (Same as Login) */}
+        <div className="col-lg-6 d-none d-lg-flex flex-column justify-content-center p-5 text-white left-panel">
+          <h1 className="fw-bold display-6">Join us and start your journey.</h1>
+          <p className="mt-3 mb-0">
+            Create your account and explore a seamless shopping experience with
+            our modern e-commerce platform.
+          </p>
         </div>
 
-        <div>
-          <label>Email</label>
-          <input
-            style={inputStyle}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="uday@test.com"
-          />
+        {/* Right Side */}
+        <div className="col-lg-6 bg-white p-4 p-md-5">
+          <h3 className="fw-bold">Create Account</h3>
+          <p className="text-muted">Register to start shopping</p>
+
+          {error && <div className="alert alert-danger">{error}</div>}
+
+          <form onSubmit={onSubmit} className="mt-4">
+            <div className="mb-3">
+              <label className="form-label">Name</label>
+              <input
+                className="form-control rounded-3"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Uday Ahirav"
+                required
+              />
+            </div>
+
+            <div className="mb-3">
+              <label className="form-label">Email</label>
+              <input
+                type="email"
+                className="form-control rounded-3"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="uday@test.com"
+                required
+              />
+            </div>
+
+            <div className="mb-3">
+              <label className="form-label">Password</label>
+              <input
+                type="password"
+                className="form-control rounded-3"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="min 6 chars"
+                required
+              />
+            </div>
+
+            <button
+              disabled={loading}
+              className="btn btn-primary w-100 rounded-3 fw-bold mt-2"
+            >
+              {loading ? "Creating..." : "Register"}
+            </button>
+          </form>
+
+          <p className="mt-4">
+            Already have an account?{" "}
+            <Link to="/login" className="fw-bold text-decoration-none">
+              Login
+            </Link>
+          </p>
         </div>
-
-        <div>
-          <label>Password</label>
-          <input
-            style={inputStyle}
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="min 6 chars"
-          />
-        </div>
-
-        <button
-          disabled={loading}
-          style={{
-            padding: "12px 14px",
-            borderRadius: 12,
-            border: "none",
-            cursor: "pointer",
-            fontWeight: 800,
-          }}
-        >
-          {loading ? "Creating..." : "Register"}
-        </button>
-      </form>
-
-      <p style={{ marginTop: 12 }}>
-        Already have an account? <Link to="/login">Login</Link>
-      </p>
+      </div>
     </div>
   );
 }

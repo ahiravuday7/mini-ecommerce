@@ -6,30 +6,6 @@ import {
   updateProduct,
 } from "../api/products.api";
 
-const card = {
-  border: "1px solid #eee",
-  borderRadius: 14,
-  background: "white",
-  padding: 14,
-};
-
-const inputStyle = {
-  padding: "10px 12px",
-  border: "1px solid #ddd",
-  borderRadius: 10,
-  width: "100%",
-  outline: "none",
-};
-
-const btn = {
-  padding: "10px 12px",
-  borderRadius: 12,
-  border: "1px solid #ddd",
-  background: "white",
-  cursor: "pointer",
-  fontWeight: 800,
-};
-
 export default function AdminProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -56,7 +32,7 @@ export default function AdminProducts() {
 
   const categories = useMemo(() => {
     const set = new Set(products.map((p) => p.category).filter(Boolean)); // Extract categories from products, Remove empty values, Remove duplicates using Set
-    return ["General", ...Array.from(set).filter((x) => x !== "General")]; // "General" always appears first, No duplicate "General" , Convert Set → Array
+    return ["General", ...Array.from(set).filter((x) => x !== "General")]; // "General" always appears first, No duplicate "General" , Convert Set -> Array
   }, [products]);
 
   //
@@ -75,7 +51,7 @@ export default function AdminProducts() {
     }
   };
 
-  // “Run load() only once when component mounts”
+  // Run load() only once when component mounts
   useEffect(() => {
     load();
   }, []);
@@ -98,7 +74,7 @@ export default function AdminProducts() {
     if (v) return setError(v);
 
     try {
-      setCreating(true); // disables button / shows “Creating…”
+      setCreating(true); // disables button / shows "Creating..."
       setError("");
       setMsg("");
 
@@ -113,7 +89,7 @@ export default function AdminProducts() {
 
       // API call
       await createProduct(payload);
-      setMsg("Product created ✅");
+      setMsg("Product created");
       setNewP({
         title: "",
         brand: "",
@@ -181,7 +157,7 @@ export default function AdminProducts() {
       };
 
       await updateProduct(editingId, payload);
-      setMsg("Product updated ✅");
+      setMsg("Product updated");
       cancelEdit();
       await load();
     } catch (e) {
@@ -198,7 +174,7 @@ export default function AdminProducts() {
       setError("");
       setMsg("");
       await deleteProduct(id);
-      setMsg("Product deleted ✅");
+      setMsg("Product deleted");
       await load();
     } catch (e) {
       setError(e?.response?.data?.message || "Failed to delete product");
@@ -206,196 +182,192 @@ export default function AdminProducts() {
   };
 
   return (
-    <div>
-      <h2 style={{ margin: "6px 0 2px" }}>Admin — Products</h2>
-      <div style={{ color: "#666", fontSize: 14 }}>
-        Create, update and delete products.
-      </div>
+    <div className="py-2">
+      <h2 className="mb-1">Admin - Products</h2>
+      <p className="text-secondary">Create, update and delete products.</p>
 
       {error && (
-        <div
-          style={{
-            marginTop: 12,
-            background: "#fff3f3",
-            border: "1px solid #ffd0d0",
-            padding: 12,
-            borderRadius: 12,
-            color: "#a40000",
-          }}
-        >
+        <div className="alert alert-danger" role="alert">
           {error}
         </div>
       )}
 
       {msg && (
-        <div
-          style={{
-            marginTop: 12,
-            background: "#f1fff3",
-            border: "1px solid #bff0c4",
-            padding: 12,
-            borderRadius: 12,
-            color: "#1b5e20",
-          }}
-        >
+        <div className="alert alert-success" role="alert">
           {msg}
         </div>
       )}
 
       {/* Create */}
-      <div style={{ ...card, marginTop: 14 }}>
-        <div style={{ fontWeight: 900, marginBottom: 10 }}>Create Product</div>
+      <div className="card border-0 shadow-sm mb-4">
+        <div className="card-body p-4">
+          <h5 className="mb-3">Create Product</h5>
 
-        <form onSubmit={onCreate} style={{ display: "grid", gap: 12 }}>
-          <div
-            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
-          >
-            <Field label="Title">
-              <input
-                style={inputStyle}
-                value={newP.title}
-                onChange={(e) => setNewField("title", e.target.value)}
-                placeholder="Wireless Mouse"
-              />
-            </Field>
-
-            <Field label="Brand">
-              <input
-                style={inputStyle}
-                value={newP.brand}
-                onChange={(e) => setNewField("brand", e.target.value)}
-                placeholder="ClickPro"
-              />
-            </Field>
-          </div>
-
-          <div
-            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
-          >
-            <Field label="Category">
-              <select
-                style={inputStyle}
-                value={newP.category}
-                onChange={(e) => setNewField("category", e.target.value)}
-              >
-                {categories.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </Field>
-
-            <Field label="Image URL">
-              <input
-                style={inputStyle}
-                value={newP.image}
-                onChange={(e) => setNewField("image", e.target.value)}
-                placeholder="https://..."
-              />
-            </Field>
-          </div>
-
-          <Field label="Description">
-            <textarea
-              style={{ ...inputStyle, minHeight: 90 }}
-              value={newP.description}
-              onChange={(e) => setNewField("description", e.target.value)}
-              placeholder="Short product description..."
-              maxLength={500}
-            />
-            <div style={{ fontSize: 12, color: "#888", textAlign: "right" }}>
-              {newP.description.length}/500
+          <form onSubmit={onCreate} className="row g-3">
+            <div className="col-md-6">
+              <Field label="Title">
+                <input
+                  className="form-control"
+                  value={newP.title}
+                  onChange={(e) => setNewField("title", e.target.value)}
+                  placeholder="Wireless Mouse"
+                />
+              </Field>
             </div>
-          </Field>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr 1fr",
-              gap: 12,
-            }}
-          >
-            <Field label="Price">
-              <input
-                style={inputStyle}
-                value={newP.price}
-                onChange={(e) => setNewField("price", e.target.value)}
-                placeholder="499"
-              />
-            </Field>
+            <div className="col-md-6">
+              <Field label="Brand">
+                <input
+                  className="form-control"
+                  value={newP.brand}
+                  onChange={(e) => setNewField("brand", e.target.value)}
+                  placeholder="ClickPro"
+                />
+              </Field>
+            </div>
 
-            <Field label="MRP">
-              <input
-                style={inputStyle}
-                value={newP.mrp}
-                onChange={(e) => setNewField("mrp", e.target.value)}
-                placeholder="799"
-              />
-            </Field>
+            <div className="col-md-6">
+              <Field label="Category">
+                <select
+                  className="form-select"
+                  value={newP.category}
+                  onChange={(e) => setNewField("category", e.target.value)}
+                >
+                  {categories.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            </div>
 
-            <Field label="Stock">
-              <input
-                style={inputStyle}
-                value={newP.stock}
-                onChange={(e) => setNewField("stock", e.target.value)}
-                placeholder="50"
-              />
-            </Field>
-          </div>
+            <div className="col-md-6">
+              <Field label="Image URL">
+                <input
+                  className="form-control"
+                  value={newP.image}
+                  onChange={(e) => setNewField("image", e.target.value)}
+                  placeholder="https://..."
+                />
+              </Field>
+            </div>
 
-          <button disabled={creating} style={{ ...btn, border: "none" }}>
-            {creating ? "Creating..." : "Create Product"}
-          </button>
-        </form>
+            <div className="col-12">
+              <Field label="Description">
+                <textarea
+                  className="form-control"
+                  value={newP.description}
+                  onChange={(e) => setNewField("description", e.target.value)}
+                  placeholder="Short product description..."
+                  maxLength={500}
+                  rows={3}
+                />
+                <div className="small text-secondary text-end mt-1">
+                  {newP.description.length}/500
+                </div>
+              </Field>
+            </div>
+
+            <div className="col-md-4">
+              <Field label="Price">
+                <input
+                  className="form-control"
+                  value={newP.price}
+                  onChange={(e) => setNewField("price", e.target.value)}
+                  placeholder="499"
+                />
+              </Field>
+            </div>
+
+            <div className="col-md-4">
+              <Field label="MRP">
+                <input
+                  className="form-control"
+                  value={newP.mrp}
+                  onChange={(e) => setNewField("mrp", e.target.value)}
+                  placeholder="799"
+                />
+              </Field>
+            </div>
+
+            <div className="col-md-4">
+              <Field label="Stock">
+                <input
+                  className="form-control"
+                  value={newP.stock}
+                  onChange={(e) => setNewField("stock", e.target.value)}
+                  placeholder="50"
+                />
+              </Field>
+            </div>
+
+            <div className="col-12 d-grid d-sm-block mt-2">
+              <button disabled={creating} className="btn btn-primary">
+                {creating ? "Creating..." : "Create Product"}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
 
       {/* List of All Products */}
-      <div style={{ marginTop: 14 }}>
-        <div style={{ fontWeight: 900, marginBottom: 10 }}>
-          Products ({products.length})
+      <div className="d-flex align-items-center justify-content-between mb-3">
+        <h5 className="mb-0">Products ({products.length})</h5>
+      </div>
+
+      {loading ? (
+        <div className="card border-0 shadow-sm">
+          <div className="card-body d-flex align-items-center gap-2 text-secondary">
+            <div className="spinner-border spinner-border-sm" role="status" />
+            <span>Loading products...</span>
+          </div>
         </div>
+      ) : products.length === 0 ? (
+        <div className="card border-0 shadow-sm">
+          <div className="card-body text-center py-5">
+            <h5 className="mb-2">No products available</h5>
+            <p className="text-secondary mb-0">
+              Create a product to get started.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="d-grid gap-3">
+          {products.map((p) => (
+            <div key={p._id} className="card border-0 shadow-sm">
+              <div className="card-body">
+                <div className="row g-3 align-items-center">
+                  <div className="col-auto">
+                    <img
+                      src={
+                        p.image || "https://via.placeholder.com/100?text=Img"
+                      }
+                      alt={p.title}
+                      className="rounded-3 admin-product-image"
+                    />
+                  </div>
 
-        {loading ? (
-          <div>Loading products...</div>
-        ) : (
-          <div style={{ display: "grid", gap: 10 }}>
-            {products.map((p) => (
-              <div key={p._id} style={{ ...card, padding: 12 }}>
-                <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                  <img
-                    src={p.image || "https://via.placeholder.com/100?text=Img"}
-                    alt={p.title}
-                    style={{
-                      width: 56,
-                      height: 56,
-                      borderRadius: 12,
-                      objectFit: "cover",
-                      background: "#fafafa",
-                    }}
-                  />
-
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 900 }}>{p.title}</div>
-                    <div style={{ fontSize: 13, color: "#666" }}>
-                      {p.brand ? `${p.brand} • ` : ""}
-                      {p.category || "General"} • Stock: {p.stock ?? 0}
+                  <div className="col">
+                    <div className="fw-bold">{p.title}</div>
+                    <div className="small text-secondary">
+                      {p.brand ? `${p.brand} - ` : ""}
+                      {p.category || "General"} - Stock: {p.stock ?? 0}
                     </div>
                   </div>
 
-                  <div style={{ fontWeight: 900 }}>₹{p.price}</div>
+                  <div className="col-sm-auto fw-bold">{`\u20B9${p.price}`}</div>
 
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button onClick={() => startEdit(p)} style={btn}>
+                  <div className="col-sm-auto d-flex gap-2">
+                    <button
+                      onClick={() => startEdit(p)}
+                      className="btn btn-outline-secondary btn-sm"
+                    >
                       Edit
                     </button>
                     <button
                       onClick={() => onDelete(p._id)}
-                      style={{
-                        ...btn,
-                        borderColor: "#f2c9c9",
-                        color: "#a40000",
-                      }}
+                      className="btn btn-outline-danger btn-sm"
                     >
                       Delete
                     </button>
@@ -404,38 +376,26 @@ export default function AdminProducts() {
 
                 {/* Edit section */}
                 {editingId === p._id && editP && (
-                  <div
-                    style={{
-                      marginTop: 12,
-                      paddingTop: 12,
-                      borderTop: "1px solid #eee",
-                    }}
-                  >
-                    <div style={{ fontWeight: 900, marginBottom: 10 }}>
-                      Edit: {p.title}
-                    </div>
+                  <div className="border-top mt-3 pt-3">
+                    <h6 className="mb-3">Edit: {p.title}</h6>
 
-                    <div style={{ display: "grid", gap: 12 }}>
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "1fr 1fr",
-                          gap: 12,
-                        }}
-                      >
+                    <div className="row g-3">
+                      <div className="col-md-6">
                         <Field label="Title">
                           <input
-                            style={inputStyle}
+                            className="form-control"
                             value={editP.title}
                             onChange={(e) =>
                               setEditField("title", e.target.value)
                             }
                           />
                         </Field>
+                      </div>
 
+                      <div className="col-md-6">
                         <Field label="Brand">
                           <input
-                            style={inputStyle}
+                            className="form-control"
                             value={editP.brand}
                             onChange={(e) =>
                               setEditField("brand", e.target.value)
@@ -444,16 +404,10 @@ export default function AdminProducts() {
                         </Field>
                       </div>
 
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "1fr 1fr",
-                          gap: 12,
-                        }}
-                      >
+                      <div className="col-md-6">
                         <Field label="Category">
                           <select
-                            style={inputStyle}
+                            className="form-select"
                             value={editP.category}
                             onChange={(e) =>
                               setEditField("category", e.target.value)
@@ -466,10 +420,12 @@ export default function AdminProducts() {
                             ))}
                           </select>
                         </Field>
+                      </div>
 
+                      <div className="col-md-6">
                         <Field label="Image URL">
                           <input
-                            style={inputStyle}
+                            className="form-control"
                             value={editP.image}
                             onChange={(e) =>
                               setEditField("image", e.target.value)
@@ -478,46 +434,47 @@ export default function AdminProducts() {
                         </Field>
                       </div>
 
-                      <Field label="Description">
-                        <textarea
-                          style={{ ...inputStyle, minHeight: 90 }}
-                          value={editP.description}
-                          onChange={(e) =>
-                            setEditField("description", e.target.value)
-                          }
-                        />
-                      </Field>
+                      <div className="col-12">
+                        <Field label="Description">
+                          <textarea
+                            className="form-control"
+                            value={editP.description}
+                            onChange={(e) =>
+                              setEditField("description", e.target.value)
+                            }
+                            rows={3}
+                          />
+                        </Field>
+                      </div>
 
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "1fr 1fr 1fr",
-                          gap: 12,
-                        }}
-                      >
+                      <div className="col-md-4">
                         <Field label="Price">
                           <input
-                            style={inputStyle}
+                            className="form-control"
                             value={editP.price}
                             onChange={(e) =>
                               setEditField("price", e.target.value)
                             }
                           />
                         </Field>
+                      </div>
 
+                      <div className="col-md-4">
                         <Field label="MRP">
                           <input
-                            style={inputStyle}
+                            className="form-control"
                             value={editP.mrp}
                             onChange={(e) =>
                               setEditField("mrp", e.target.value)
                             }
                           />
                         </Field>
+                      </div>
 
+                      <div className="col-md-4">
                         <Field label="Stock">
                           <input
-                            style={inputStyle}
+                            className="form-control"
                             value={editP.stock}
                             onChange={(e) =>
                               setEditField("stock", e.target.value)
@@ -526,19 +483,16 @@ export default function AdminProducts() {
                         </Field>
                       </div>
 
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: 10,
-                          justifyContent: "flex-end",
-                        }}
-                      >
-                        <button onClick={cancelEdit} style={btn}>
+                      <div className="col-12 d-flex justify-content-end gap-2 mt-2">
+                        <button
+                          onClick={cancelEdit}
+                          className="btn btn-outline-secondary"
+                        >
                           Cancel
                         </button>
                         <button
                           onClick={onSaveEdit}
-                          style={{ ...btn, border: "none" }}
+                          className="btn btn-primary"
                         >
                           Save
                         </button>
@@ -547,20 +501,18 @@ export default function AdminProducts() {
                   </div>
                 )}
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 function Field({ label, children }) {
   return (
-    <div style={{ display: "grid", gap: 6 }}>
-      <label style={{ fontSize: 13, color: "#444", fontWeight: 700 }}>
-        {label}
-      </label>
+    <div>
+      <label className="form-label fw-semibold mb-1">{label}</label>
       {children}
     </div>
   );

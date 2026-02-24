@@ -1,0 +1,67 @@
+/* Premium Footer */
+.footer-premium {
+  background: #0b1220;
+}
+
+.footer-main {
+  background: radial-gradient(1200px 400px at 10% 0%, rgba(13,110,253,0.12), transparent 60%),
+              radial-gradient(1200px 400px at 90% 0%, rgba(255,193,7,0.10), transparent 60%);
+}
+
+.footer-bottom {
+  border-top: 1px solid rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.25);
+}
+
+.brand-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #ffc107;
+  box-shadow: 0 0 0 4px rgba(255,193,7,0.15);
+}
+
+.footer-links li {
+  margin: 10px 0;
+}
+
+.footer-links a {
+  color: rgba(255,255,255,0.65);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.footer-links a:hover {
+  color: #ffc107;
+  padding-left: 4px;
+}
+
+.social-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.10);
+  text-decoration: none;
+  transition: transform 0.2s ease, background 0.2s ease, border 0.2s ease;
+}
+
+.social-btn:hover {
+  transform: translateY(-2px);
+  background: rgba(255,193,7,0.14);
+  border-color: rgba(255,193,7,0.35);
+  color: #ffc107;
+}
+
+.pay-pill {
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.8);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+}

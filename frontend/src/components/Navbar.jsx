@@ -1,11 +1,8 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-const linkStyle = ({ isActive }) => ({
-  marginRight: 12,
-  textDecoration: "none",
-  fontWeight: isActive ? 700 : 500,
-});
+const linkClass = ({ isActive }) =>
+  `nav-link px-0 px-lg-2 ${isActive ? "fw-bold text-primary" : "text-secondary"}`;
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -17,84 +14,60 @@ export default function Navbar() {
   };
 
   return (
-    <header
-      style={{
-        borderBottom: "1px solid #eee",
-        padding: "12px 16px",
-        position: "sticky",
-        top: 0,
-        background: "white",
-        zIndex: 10,
-      }}
-    >
-      <div
-        style={{
-          maxWidth: 1100,
-          margin: "0 auto",
-          display: "flex",
-          alignItems: "center",
-        }}
-      >
-        <Link
-          to="/"
-          style={{ fontWeight: 800, marginRight: 18, textDecoration: "none" }}
-        >
-          MiniStore
-        </Link>
+    <header className="bg-white border-bottom sticky-top shadow-sm">
+      <div className="container py-3">
+        <div className="d-flex flex-column flex-lg-row align-items-lg-center gap-3">
+          <Link to="/" className="text-decoration-none fs-4 fw-bold text-dark">
+            MiniStore
+          </Link>
 
-        <nav style={{ flex: 1 }}>
-          <NavLink to="/" style={linkStyle}>
-            Home
-          </NavLink>
-          <NavLink to="/cart" style={linkStyle}>
-            Cart
-          </NavLink>
-          <NavLink to="/orders" style={linkStyle}>
-            My Orders
-          </NavLink>
-        </nav>
+          <nav className="nav gap-3 flex-grow-1">
+            <NavLink to="/" className={linkClass}>
+              Home
+            </NavLink>
+            <NavLink to="/cart" className={linkClass}>
+              Cart
+            </NavLink>
+            <NavLink to="/orders" className={linkClass}>
+              My Orders
+            </NavLink>
+          </nav>
 
-        <nav style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {user ? (
-            <>
-              <span style={{ fontSize: 14, color: "#333" }}>
-                Hi, <b>{user.name}</b>
-              </span>
+          <nav className="d-flex align-items-center gap-2 flex-wrap">
+            {user ? (
+              <>
+                <span className="small text-secondary">
+                  Hi, <b>{user.name}</b>
+                </span>
 
-              {user.isAdmin && (
-                <Link
-                  to="/admin/products"
-                  style={{ textDecoration: "none", fontWeight: 800 }}
+                {user.isAdmin && (
+                  <Link
+                    to="/admin/products"
+                    className="btn btn-outline-primary btn-sm"
+                  >
+                    Products
+                  </Link>
+                )}
+
+                <button
+                  onClick={onLogout}
+                  className="btn btn-outline-secondary btn-sm"
                 >
-                  Products
-                </Link>
-              )}
-
-              <button
-                onClick={onLogout}
-                style={{
-                  padding: "8px 12px",
-                  borderRadius: 10,
-                  border: "1px solid #ddd",
-                  background: "white",
-                  cursor: "pointer",
-                  fontWeight: 700,
-                }}
-              >
-                Logout
-              </button>
-            </>
-          ) : (
-            <>
-              <NavLink to="/login" style={linkStyle}>
-                Login
-              </NavLink>
-              <NavLink to="/register" style={linkStyle}>
-                Register
-              </NavLink>
-            </>
-          )}
-        </nav>
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <NavLink to="/login" className={linkClass}>
+                  Login
+                </NavLink>
+                <NavLink to="/register" className={linkClass}>
+                  Register
+                </NavLink>
+              </>
+            )}
+          </nav>
+        </div>
       </div>
     </header>
   );

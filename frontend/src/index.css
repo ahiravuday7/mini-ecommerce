@@ -1,68 +1,95 @@
-/* :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+:root {
+  --bs-primary: #0d6efd;
+  --bs-dark: #212529;
+  --bs-body-bg: #ffffff;
 }
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
+  /* background: var(--brand-bg); */
+}
+
+#root {
   min-height: 100vh;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+/* for ligin and register page */
+.login-wrapper {
+  width: 100%;
+  max-width: 960px;
+}
+.left-panel {
+  background: linear-gradient(160deg, #714435 0%, #d4623e 100%);
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+/* Product card page*/
+.product-image-wrap {
+  height: 220px;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+.product-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* product details page */
+.product-detail-image-wrap {
+  min-height: 420px;
+}
+
+@media (max-width: 991.98px) {
+  .summary-sticky {
+    position: static;
+    top: auto;
   }
-  a:hover {
-    color: #747bff;
+
+  .product-detail-image-wrap {
+    min-height: 320px;
   }
-  button {
-    background-color: #f9f9f9;
-  }
-} */
+}
+.product-detail-image {
+  width: 100%;
+  max-height: 520px;
+  object-fit: contain;
+}
+
+/* cart  */
+.cart-item-image {
+  width: 90px;
+  height: 90px;
+  object-fit: cover;
+  background: #f8f9fa;
+}
+
+/* my orders & checkout */
+.summary-item-image {
+  width: 46px;
+  height: 46px;
+  object-fit: cover;
+  background: #f8f9fa;
+}
+
+/* order details */
+.order-item-image {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  background: #f8f9fa;
+}
+
+/* admin products */
+.admin-product-image {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  background: #f8f9fa;
+}
+
+/* sticky summary cart, checkout, order details */
+.summary-sticky {
+  position: sticky;
+  /* top: 5.5rem; */
+}
+
+

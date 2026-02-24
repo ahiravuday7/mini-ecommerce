@@ -3,13 +3,6 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { getOrderById } from "../api/orders.api";
 import { useAuth } from "../context/AuthContext";
 
-const card = {
-  border: "1px solid #eee",
-  borderRadius: 14,
-  background: "white",
-  padding: 14,
-};
-
 export default function OrderDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -53,198 +46,161 @@ export default function OrderDetails() {
     if (!booting && user) load();
   }, [booting, user, id]);
 
-  if (booting) return <div>Checking session...</div>;
+  if (booting) {
+    return (
+      <div className="card border-0 shadow-sm">
+        <div className="card-body d-flex align-items-center gap-2 text-secondary">
+          <div className="spinner-border spinner-border-sm" role="status" />
+          <span>Checking session...</span>
+        </div>
+      </div>
+    );
+  }
+
   if (!user) return null; // Redirecting to login
 
   return (
-    <div>
-      <div
-        style={{
-          marginBottom: 12,
-          display: "flex",
-          justifyContent: "space-between",
-          gap: 10,
-        }}
-      >
-        <Link to="/orders" style={{ textDecoration: "none" }}>
-          ← Back to My Orders
+    <div className="py-2">
+      <div className="d-flex flex-wrap justify-content-between gap-2 mb-3">
+        <Link to="/orders" className="btn btn-link p-0 text-decoration-none">
+          &larr; Back to My Orders
         </Link>
 
-        <Link to="/" style={{ textDecoration: "none" }}>
-          Continue shopping →
+        <Link to="/" className="btn btn-link p-0 text-decoration-none">
+          Continue shopping &rarr;
         </Link>
       </div>
 
-      <h2 style={{ margin: "6px 0 2px" }}>Order Details</h2>
-      <div style={{ color: "#666", fontSize: 14 }}>
-        View complete order information.
-      </div>
+      <h2 className="mb-1">Order Details</h2>
+      <p className="text-secondary">View complete order information.</p>
 
       {error && (
-        <div
-          style={{
-            marginTop: 12,
-            background: "#fff3f3",
-            border: "1px solid #ffd0d0",
-            padding: 12,
-            borderRadius: 12,
-            color: "#a40000",
-          }}
-        >
+        <div className="alert alert-danger" role="alert">
           {error}
         </div>
       )}
 
       {loading ? (
-        <div style={{ marginTop: 12 }}>Loading order...</div>
+        <div className="card border-0 shadow-sm">
+          <div className="card-body d-flex align-items-center gap-2 text-secondary">
+            <div className="spinner-border spinner-border-sm" role="status" />
+            <span>Loading order...</span>
+          </div>
+        </div>
       ) : !order ? (
-        <div style={{ marginTop: 14 }}>Order not found.</div>
+        <div className="alert alert-secondary mb-0">Order not found.</div>
       ) : (
-        <div
-          style={{
-            marginTop: 14,
-            display: "grid",
-            gridTemplateColumns: "1.2fr 0.8fr",
-            gap: 14,
-            alignItems: "start",
-          }}
-        >
-          {/* LEFT: Items + Address */}
-          <div style={{ display: "grid", gap: 12 }}>
-            <div style={card}>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  gap: 10,
-                  flexWrap: "wrap",
-                }}
-              >
-                <div>
-                  <div style={{ fontWeight: 900 }}>
-                    Order ID:{" "}
-                    <span style={{ fontWeight: 700 }}>{order._id}</span>
-                  </div>
-                  <div style={{ color: "#666", fontSize: 13, marginTop: 4 }}>
-                    Placed on: {new Date(order.createdAt).toLocaleString()}
-                  </div>
-                </div>
-
-                <div style={{ textAlign: "right" }}>
-                  <div style={{ fontWeight: 900, fontSize: 16 }}>
-                    ₹{order.totalPrice}
-                  </div>
-                  <div style={{ fontSize: 13, color: "#666" }}>
-                    Status: <b>{order.status}</b>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div style={card}>
-              <div style={{ fontWeight: 900, marginBottom: 8 }}>
-                Shipping Address
-              </div>
-              <div style={{ color: "#333", lineHeight: 1.6 }}>
-                <div>
-                  <b>{order.shippingAddress?.fullName}</b> •{" "}
-                  {order.shippingAddress?.phone}
-                </div>
-                <div>{order.shippingAddress?.addressLine1}</div>
-                {order.shippingAddress?.addressLine2 ? (
-                  <div>{order.shippingAddress?.addressLine2}</div>
-                ) : null}
-                <div>
-                  {order.shippingAddress?.city}, {order.shippingAddress?.state}{" "}
-                  - {order.shippingAddress?.pincode}
-                </div>
-                <div>{order.shippingAddress?.country}</div>
-              </div>
-            </div>
-
-            <div style={card}>
-              <div style={{ fontWeight: 900, marginBottom: 10 }}>Items</div>
-
-              <div style={{ display: "grid", gap: 10 }}>
-                {(order.items || []).map((it, idx) => (
-                  <div
-                    key={idx}
-                    style={{ display: "flex", gap: 12, alignItems: "center" }}
-                  >
-                    <img
-                      src={
-                        it.image || "https://via.placeholder.com/100?text=Img"
-                      }
-                      alt={it.title || "item"}
-                      style={{
-                        width: 56,
-                        height: 56,
-                        borderRadius: 12,
-                        objectFit: "cover",
-                        background: "#fafafa",
-                      }}
-                    />
-
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 900 }}>{it.title}</div>
-                      <div style={{ color: "#666", fontSize: 13 }}>
-                        Qty: {it.qty} • ₹{it.price}
+        <div className="row g-4">
+          {/* Order Details lefr side */}
+          <div className="col-lg-8">
+            <div className="d-grid gap-3">
+              <div className="card border-0 shadow-sm">
+                <div className="card-body">
+                  <div className="d-flex flex-wrap justify-content-between gap-3">
+                    <div>
+                      <div className="fw-bold">
+                        Order ID:{" "}
+                        <span className="fw-semibold">{order._id}</span>
+                      </div>
+                      <div className="text-secondary small mt-1">
+                        Placed on: {new Date(order.createdAt).toLocaleString()}
                       </div>
                     </div>
 
-                    <div style={{ fontWeight: 900 }}>₹{it.price * it.qty}</div>
+                    <div className="text-lg-end">
+                      <div className="fw-bold fs-5">{`\u20B9${order.totalPrice}`}</div>
+                      <div className="small text-secondary">
+                        Status: <b>{order.status}</b>
+                      </div>
+                    </div>
                   </div>
-                ))}
+                </div>
+              </div>
+
+              <div className="card border-0 shadow-sm">
+                <div className="card-body">
+                  <h5 className="mb-3">Shipping Address</h5>
+                  <div className="text-body-secondary lh-base">
+                    <div>
+                      <b>{order.shippingAddress?.fullName}</b> -{" "}
+                      {order.shippingAddress?.phone}
+                    </div>
+                    <div>{order.shippingAddress?.addressLine1}</div>
+                    {order.shippingAddress?.addressLine2 ? (
+                      <div>{order.shippingAddress?.addressLine2}</div>
+                    ) : null}
+                    <div>
+                      {order.shippingAddress?.city},{" "}
+                      {order.shippingAddress?.state} -{" "}
+                      {order.shippingAddress?.pincode}
+                    </div>
+                    <div>{order.shippingAddress?.country}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="card border-0 shadow-sm">
+                <div className="card-body">
+                  <h5 className="mb-3">Items</h5>
+
+                  <div className="d-grid gap-3">
+                    {(order.items || []).map((it, idx) => (
+                      <div
+                        key={idx}
+                        className="d-flex gap-3 align-items-center"
+                      >
+                        <img
+                          src={
+                            it.image ||
+                            "https://via.placeholder.com/100?text=Img"
+                          }
+                          alt={it.title || "item"}
+                          className="rounded-3 order-item-image"
+                        />
+
+                        <div className="flex-grow-1">
+                          <div className="fw-bold">{it.title}</div>
+                          <div className="small text-secondary">
+                            Qty: {it.qty} - {`\u20B9${it.price}`}
+                          </div>
+                        </div>
+
+                        <div className="fw-bold">{`\u20B9${it.price * it.qty}`}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* RIGHT: Summary */}
-          <div style={{ ...card, position: "sticky", top: 84 }}>
-            <div style={{ fontWeight: 900, fontSize: 16, marginBottom: 10 }}>
-              Summary
-            </div>
+          {/* Summary right side */}
+          <div className="col-lg-4">
+            <div className="card border-0 shadow-sm summary-sticky">
+              <div className="card-body">
+                <h5 className="mb-3">Summary</h5>
 
-            <Row label="Items" value={`₹${totals.itemsPrice}`} />
-            <Row label="Shipping" value={`₹${totals.shippingPrice}`} />
-            <Row label="Tax" value={`₹${totals.taxPrice}`} />
-            <hr
-              style={{
-                border: "none",
-                borderTop: "1px solid #eee",
-                margin: "10px 0",
-              }}
-            />
-            <Row label={<b>Total</b>} value={<b>₹{totals.totalPrice}</b>} />
+                <Row label="Items" value={`\u20B9${totals.itemsPrice}`} />
+                <Row label="Shipping" value={`\u20B9${totals.shippingPrice}`} />
+                <Row label="Tax" value={`\u20B9${totals.taxPrice}`} />
+                <hr />
+                <Row
+                  label={<b>Total</b>}
+                  value={<b>{`\u20B9${totals.totalPrice}`}</b>}
+                />
 
-            <hr
-              style={{
-                border: "none",
-                borderTop: "1px solid #eee",
-                margin: "12px 0",
-              }}
-            />
+                <hr />
 
-            <div style={{ fontWeight: 900, marginBottom: 6 }}>Payment</div>
-            <div style={{ color: "#666", fontSize: 13 }}>
-              Method: <b>{order.paymentMethod || "COD"}</b>
-            </div>
-            <div style={{ color: "#666", fontSize: 13 }}>
-              Status: <b>{order.paymentStatus || "pending"}</b>
+                <h6 className="mb-2">Payment</h6>
+                <div className="small text-secondary">
+                  Method: <b>{order.paymentMethod || "COD"}</b>
+                </div>
+                <div className="small text-secondary">
+                  Status: <b>{order.paymentStatus || "pending"}</b>
+                </div>
+              </div>
             </div>
           </div>
-
-          <style>{`
-            @media (max-width: 900px) {
-              div[style*="grid-template-columns: 1.2fr 0.8fr"] {
-                grid-template-columns: 1fr !important;
-              }
-              div[style*="position: sticky"] {
-                position: relative !important;
-                top: auto !important;
-              }
-            }
-          `}</style>
         </div>
       )}
     </div>
@@ -253,15 +209,9 @@ export default function OrderDetails() {
 
 function Row({ label, value }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        padding: "6px 0",
-      }}
-    >
-      <div style={{ color: "#666" }}>{label}</div>
-      <div>{value}</div>
+    <div className="d-flex justify-content-between py-1">
+      <span className="text-secondary">{label}</span>
+      <span>{value}</span>
     </div>
   );
 }

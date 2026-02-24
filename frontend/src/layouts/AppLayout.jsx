@@ -1,15 +1,33 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import { useAuth } from "../context/AuthContext";
 
 export default function AppLayout() {
   const { booting } = useAuth();
+  const location = useLocation();
+
+  const isAuthPage =
+    location.pathname === "/login" || location.pathname === "/register";
+
   return (
-    <div>
+    <div className="min-vh-100 d-flex flex-column bg-body-tertiary">
       <Navbar />
-      <main style={{ maxWidth: 1100, margin: "0 auto", padding: "16px" }}>
-        {booting ? <div>Checking session...</div> : <Outlet />}
+      <main className={`flex-grow-1 ${isAuthPage ? "" : "py-4"}`}>
+        {booting ? (
+          <div className="container py-5 d-flex align-items-center gap-2 text-secondary">
+            <div className="spinner-border spinner-border-sm" role="status" />
+            <span>Checking session...</span>
+          </div>
+        ) : isAuthPage ? (
+          <Outlet />
+        ) : (
+          <div className="container">
+            <Outlet />
+          </div>
+        )}
       </main>
+      <Footer />
     </div>
   );
 }

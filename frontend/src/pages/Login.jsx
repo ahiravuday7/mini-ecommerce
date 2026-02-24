@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import "./login.css";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -27,29 +26,29 @@ export default function Login() {
   };
 
   return (
-    <div className="container-fluid min-vh-100 d-flex align-items-center justify-content-center bg-main">
+    <div className="container-fluid min-vh-100 d-flex align-items-center justify-content-center  py-4">
       <div className="row shadow-lg rounded-4 overflow-hidden login-wrapper">
-        {/* LEFT SIDE */}
+        {/* Left Side */}
         <div className="col-lg-6 d-none d-lg-flex flex-column justify-content-center p-5 text-white left-panel">
           <h1 className="fw-bold display-6">
             Simplify management with our dashboard.
           </h1>
-          <p className="mt-3">
+          <p className="mt-3 mb-0">
             Manage your e-commerce platform smoothly with our modern admin
             dashboard.
           </p>
         </div>
 
-        {/* RIGHT SIDE */}
-        <div className="col-lg-6 bg-white p-5">
-          <h3 className="fw-bold text-dark-brown">Welcome Back</h3>
+        {/* Right Side */}
+        <div className="col-lg-6 bg-white p-4 p-md-5">
+          <h3 className="fw-bold ">Welcome Back</h3>
           <p className="text-muted">Please login to your account</p>
 
           {error && <div className="alert alert-danger">{error}</div>}
 
           <form onSubmit={onSubmit} className="mt-4">
             <div className="mb-3">
-              <label className="form-label text-dark-brown">Email</label>
+              <label className="form-label ">Email</label>
               <input
                 type="email"
                 className="form-control rounded-3"
@@ -61,7 +60,7 @@ export default function Login() {
             </div>
 
             <div className="mb-3">
-              <label className="form-label text-dark-brown">Password</label>
+              <label className="form-label ">Password</label>
               <input
                 type="password"
                 className="form-control rounded-3"
@@ -75,7 +74,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="btn w-100 rounded-3 fw-bold btn-custom mt-2"
+              className="btn btn-primary w-100 rounded-3 fw-bold mt-2"
             >
               {loading ? "Logging in..." : "Login"}
             </button>
@@ -83,7 +82,7 @@ export default function Login() {
 
           <p className="mt-4">
             New user?{" "}
-            <Link to="/register" className="text-orange fw-bold">
+            <Link to="/register" className=" fw-bold text-decoration-none">
               Signup
             </Link>
           </p>

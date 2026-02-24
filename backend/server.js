@@ -29,7 +29,7 @@ const apiLimiter = rateLimit({
 // Strict limiter (login/register brute-force protection)
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 min
-  max: 20, // stricter
+  max: 200, // stricter
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: "Too many login attempts. Please try again later." },
