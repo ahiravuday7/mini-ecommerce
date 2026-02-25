@@ -10,6 +10,10 @@ import Checkout from "./pages/Checkout";
 import MyOrders from "./pages/MyOrders";
 import AdminProducts from "./pages/AdminProducts";
 import OrderDetails from "./pages/OrderDetails";
+import About from "./pages/About";
+import Careers from "./pages/Careers";
+import Contact from "./pages/Contact";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 import AdminRoute from "./components/AdminRoute";
 
@@ -27,6 +31,10 @@ export default function App() {
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/orders" element={<MyOrders />} />
         <Route path="/orders/:id" element={<OrderDetails />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/careers" element={<Careers />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
         <Route
           path="/admin/products"
