@@ -13,6 +13,10 @@ const authRoutes = require("./routes/auth.routes");
 const cartRoutes = require("./routes/cart.routes");
 const orderRoutes = require("./routes/order.routes");
 
+// faq
+const faqRoutes = require("./routes/faq.routes");
+const adminFaqRoutes = require("./routes/admin.faq.routes");
+
 const app = express();
 
 app.set("trust proxy", 1); // important for deployed apps
@@ -58,6 +62,10 @@ app.use("/api/products", productRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
+
+// FAQ
+app.use("/api/faqs", faqRoutes);
+app.use("/api/admin/faqs", adminFaqRoutes);
 
 // Error handling middleware (asyncHandler)
 app.use(notFound);

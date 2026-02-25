@@ -70,7 +70,7 @@ const Footer = () => {
               <h6 className="fw-semibold">Support</h6>
               <ul className="list-unstyled footer-links">
                 <li>
-                  <a href="#">FAQs</a>
+                  <Link to="/faqs">FAQs</Link>
                 </li>
                 <li>
                   <a href="#">Shipping</a>

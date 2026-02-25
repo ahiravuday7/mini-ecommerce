@@ -11,6 +11,7 @@ import { useAuth } from "../context/AuthContext";
 export default function Cart() {
   const navigate = useNavigate();
   const { user, booting } = useAuth();
+  // dummy changes
 
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(true);

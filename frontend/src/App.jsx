@@ -14,6 +14,8 @@ import About from "./pages/About";
 import Careers from "./pages/Careers";
 import Contact from "./pages/Contact";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import FAQs from "./pages/FAQs";
+import AdminFaqs from "./pages/AdminFaqs";
 
 import AdminRoute from "./components/AdminRoute";
 
@@ -35,12 +37,22 @@ export default function App() {
         <Route path="/careers" element={<Careers />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/faqs" element={<FAQs />} />
 
         <Route
           path="/admin/products"
           element={
             <AdminRoute>
               <AdminProducts />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/admin/faqs"
+          element={
+            <AdminRoute>
+              <AdminFaqs />
             </AdminRoute>
           }
         />

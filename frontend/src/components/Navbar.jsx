@@ -41,12 +41,17 @@ export default function Navbar() {
                 </span>
 
                 {user.isAdmin && (
-                  <Link
-                    to="/admin/products"
-                    className="btn btn-outline-primary btn-sm"
-                  >
-                    Products
-                  </Link>
+                  <>
+                    <Link
+                      to="/admin/products"
+                      className="btn btn-outline-primary btn-sm"
+                    >
+                      Products
+                    </Link>
+                    <Link to="/admin/faqs" className="btn btn-outline-primary btn-sm">
+                      FAQs
+                    </Link>
+                  </>
                 )}
 
                 <button
