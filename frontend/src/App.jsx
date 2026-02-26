@@ -16,28 +16,87 @@ import Contact from "./pages/Contact";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import FAQs from "./pages/FAQs";
 import AdminFaqs from "./pages/AdminFaqs";
+import Products from "./pages/Products";
 
 import AdminRoute from "./components/AdminRoute";
+import UserRoute from "./components/UserRoute";
 
 export default function App() {
   return (
     <Routes>
       <Route element={<AppLayout />}>
-        <Route path="/" element={<Home />} />
-        <Route path="/product/:id" element={<ProductDetails />} />
-        <Route path="/cart" element={<Cart />} />
+        <Route
+          path="/"
+          element={
+            <UserRoute>
+              <Home />
+            </UserRoute>
+          }
+        />
+        <Route
+          path="/product/:id"
+          element={
+            <UserRoute>
+              <ProductDetails />
+            </UserRoute>
+          }
+        />
+        <Route
+          path="/cart"
+          element={
+            <UserRoute>
+              <Cart />
+            </UserRoute>
+          }
+        />
 
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        <Route path="/checkout" element={<Checkout />} />
-        <Route path="/orders" element={<MyOrders />} />
-        <Route path="/orders/:id" element={<OrderDetails />} />
+        <Route
+          path="/checkout"
+          element={
+            <UserRoute>
+              <Checkout />
+            </UserRoute>
+          }
+        />
+        <Route
+          path="/orders"
+          element={
+            <UserRoute>
+              <MyOrders />
+            </UserRoute>
+          }
+        />
+        <Route
+          path="/orders/:id"
+          element={
+            <UserRoute>
+              <OrderDetails />
+            </UserRoute>
+          }
+        />
         <Route path="/about" element={<About />} />
         <Route path="/careers" element={<Careers />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-        <Route path="/faqs" element={<FAQs />} />
+        <Route
+          path="/faqs"
+          element={
+            <UserRoute>
+              <FAQs />
+            </UserRoute>
+          }
+        />
+        <Route
+          path="/products"
+          element={
+            <UserRoute>
+              <Products />
+            </UserRoute>
+          }
+        />
 
         <Route
           path="/admin/products"

@@ -7,6 +7,8 @@ const linkClass = ({ isActive }) =>
 export default function Navbar() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const isUserOnly = user && !user.isAdmin;
+  const brandPath = user?.isAdmin ? "/admin/products" : "/";
 
   const onLogout = async () => {
     await logout();
@@ -17,20 +19,33 @@ export default function Navbar() {
     <header className="bg-white border-bottom sticky-top shadow-sm">
       <div className="container py-3">
         <div className="d-flex flex-column flex-lg-row align-items-lg-center gap-3">
-          <Link to="/" className="text-decoration-none fs-4 fw-bold text-dark">
+          <Link
+            to={brandPath}
+            className="text-decoration-none fs-4 fw-bold text-dark"
+          >
             MiniStore
           </Link>
 
           <nav className="nav gap-3 flex-grow-1">
-            <NavLink to="/" className={linkClass}>
-              Home
-            </NavLink>
-            <NavLink to="/cart" className={linkClass}>
-              Cart
-            </NavLink>
-            <NavLink to="/orders" className={linkClass}>
-              My Orders
-            </NavLink>
+            {isUserOnly && (
+              <>
+                <NavLink to="/" className={linkClass}>
+                  Home
+                </NavLink>
+                <NavLink to="/products" className={linkClass}>
+                  Products
+                </NavLink>
+                <NavLink to="/cart" className={linkClass}>
+                  Cart
+                </NavLink>
+                <NavLink to="/orders" className={linkClass}>
+                  My Orders
+                </NavLink>
+                <NavLink to="/faqs" className={linkClass}>
+                  FAQs
+                </NavLink>
+              </>
+            )}
           </nav>
 
           <nav className="d-flex align-items-center gap-2 flex-wrap">
@@ -46,10 +61,13 @@ export default function Navbar() {
                       to="/admin/products"
                       className="btn btn-outline-primary btn-sm"
                     >
-                      Products
+                      Product Dashboard
                     </Link>
-                    <Link to="/admin/faqs" className="btn btn-outline-primary btn-sm">
-                      FAQs
+                    <Link
+                      to="/admin/faqs"
+                      className="btn btn-outline-primary btn-sm"
+                    >
+                      FAQs Dashboard
                     </Link>
                   </>
                 )}

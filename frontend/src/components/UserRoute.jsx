@@ -1,7 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-export default function AdminRoute({ children }) {
+export default function UserRoute({ children }) {
   // user -> logged-in user object, booting -> app is still checking session (like /auth/me API)
   const { user, booting } = useAuth();
 
@@ -15,10 +15,10 @@ export default function AdminRoute({ children }) {
     );
   }
 
-  // If user is not logged in: Redirect to login page
+  // If no user: Redirect to login page
   if (!user) return <Navigate to="/login" replace />;
-  // If logged-in user is NOT admin: Redirect to home page(/)
-  if (!user.isAdmin) return <Navigate to="/" replace />;
+  // If admin tries to access user-only page: Redirect to admin dashboard
+  if (user.isAdmin) return <Navigate to="/admin/products" replace />;
 
   return children;
 }
