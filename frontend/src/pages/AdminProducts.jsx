@@ -5,10 +5,14 @@ import {
   fetchProducts,
   updateProduct,
 } from "../api/products.api";
+import Pagination from "../components/Pagination";
+
+const PRODUCTS_PER_PAGE = 10;
 
 export default function AdminProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1); //// When page loads -> starts from page 1
 
   const [error, setError] = useState("");
   const [msg, setMsg] = useState("");
@@ -35,7 +39,18 @@ export default function AdminProducts() {
     return ["General", ...Array.from(set).filter((x) => x !== "General")]; // "General" always appears first, No duplicate "General" , Convert Set -> Array
   }, [products]);
 
-  //
+  // calculates how many total pages need
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(products.length / PRODUCTS_PER_PAGE)), //Ensures minimum 1 page,Always round UP,
+    [products.length],
+  );
+
+  // It selects only the products for the current page
+  const paginatedProducts = useMemo(() => {
+    const start = (currentPage - 1) * PRODUCTS_PER_PAGE;
+    return products.slice(start, start + PRODUCTS_PER_PAGE);
+  }, [products, currentPage]);
+
   const load = async () => {
     try {
       setLoading(true); // Start loading state
@@ -55,6 +70,11 @@ export default function AdminProducts() {
   useEffect(() => {
     load();
   }, []);
+
+  // keep page in valid range if results become fewer(current page never exceeds total pages)
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [currentPage, totalPages]);
 
   // It uses a functional state update and computed property names to update a single field without mutating or overwriting the existing state.
   const setNewField = (k, v) => setNewP((p) => ({ ...p, [k]: v }));
@@ -333,177 +353,187 @@ export default function AdminProducts() {
           </div>
         </div>
       ) : (
-        <div className="d-grid gap-3">
-          {products.map((p) => (
-            <div key={p._id} className="card border-0 shadow-sm">
-              <div className="card-body">
-                <div className="row g-3 align-items-center">
-                  <div className="col-auto">
-                    <img
-                      src={
-                        p.image || "https://via.placeholder.com/100?text=Img"
-                      }
-                      alt={p.title}
-                      className="rounded-3 admin-product-image"
-                    />
-                  </div>
+        <>
+          <div className="d-grid gap-3">
+            {paginatedProducts.map((p) => (
+              <div key={p._id} className="card border-0 shadow-sm">
+                <div className="card-body">
+                  <div className="row g-3 align-items-center">
+                    <div className="col-auto">
+                      <img
+                        src={
+                          p.image || "https://via.placeholder.com/100?text=Img"
+                        }
+                        alt={p.title}
+                        className="rounded-3 admin-product-image"
+                      />
+                    </div>
 
-                  <div className="col">
-                    <div className="fw-bold">{p.title}</div>
-                    <div className="small text-secondary">
-                      {p.brand ? `${p.brand} - ` : ""}
-                      {p.category || "General"} - Stock: {p.stock ?? 0}
+                    <div className="col">
+                      <div className="fw-bold">{p.title}</div>
+                      <div className="small text-secondary">
+                        {p.brand ? `${p.brand} - ` : ""}
+                        {p.category || "General"} - Stock: {p.stock ?? 0}
+                      </div>
+                    </div>
+
+                    <div className="col-sm-auto fw-bold">{`\u20B9${p.price}`}</div>
+
+                    <div className="col-sm-auto d-flex gap-2">
+                      <button
+                        onClick={() => startEdit(p)}
+                        className="btn btn-outline-secondary btn-sm"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => onDelete(p._id)}
+                        className="btn btn-outline-danger btn-sm"
+                      >
+                        Delete
+                      </button>
                     </div>
                   </div>
 
-                  <div className="col-sm-auto fw-bold">{`\u20B9${p.price}`}</div>
+                  {/* Edit section */}
+                  {editingId === p._id && editP && (
+                    <div className="border-top mt-3 pt-3">
+                      <h6 className="mb-3">Edit: {p.title}</h6>
 
-                  <div className="col-sm-auto d-flex gap-2">
-                    <button
-                      onClick={() => startEdit(p)}
-                      className="btn btn-outline-secondary btn-sm"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => onDelete(p._id)}
-                      className="btn btn-outline-danger btn-sm"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
+                      <div className="row g-3">
+                        <div className="col-md-6">
+                          <Field label="Title">
+                            <input
+                              className="form-control"
+                              value={editP.title}
+                              onChange={(e) =>
+                                setEditField("title", e.target.value)
+                              }
+                            />
+                          </Field>
+                        </div>
 
-                {/* Edit section */}
-                {editingId === p._id && editP && (
-                  <div className="border-top mt-3 pt-3">
-                    <h6 className="mb-3">Edit: {p.title}</h6>
+                        <div className="col-md-6">
+                          <Field label="Brand">
+                            <input
+                              className="form-control"
+                              value={editP.brand}
+                              onChange={(e) =>
+                                setEditField("brand", e.target.value)
+                              }
+                            />
+                          </Field>
+                        </div>
 
-                    <div className="row g-3">
-                      <div className="col-md-6">
-                        <Field label="Title">
-                          <input
-                            className="form-control"
-                            value={editP.title}
-                            onChange={(e) =>
-                              setEditField("title", e.target.value)
-                            }
-                          />
-                        </Field>
-                      </div>
+                        <div className="col-md-6">
+                          <Field label="Category">
+                            <select
+                              className="form-select"
+                              value={editP.category}
+                              onChange={(e) =>
+                                setEditField("category", e.target.value)
+                              }
+                            >
+                              {categories.map((c) => (
+                                <option key={c} value={c}>
+                                  {c}
+                                </option>
+                              ))}
+                            </select>
+                          </Field>
+                        </div>
 
-                      <div className="col-md-6">
-                        <Field label="Brand">
-                          <input
-                            className="form-control"
-                            value={editP.brand}
-                            onChange={(e) =>
-                              setEditField("brand", e.target.value)
-                            }
-                          />
-                        </Field>
-                      </div>
+                        <div className="col-md-6">
+                          <Field label="Image URL">
+                            <input
+                              className="form-control"
+                              value={editP.image}
+                              onChange={(e) =>
+                                setEditField("image", e.target.value)
+                              }
+                            />
+                          </Field>
+                        </div>
 
-                      <div className="col-md-6">
-                        <Field label="Category">
-                          <select
-                            className="form-select"
-                            value={editP.category}
-                            onChange={(e) =>
-                              setEditField("category", e.target.value)
-                            }
+                        <div className="col-12">
+                          <Field label="Description">
+                            <textarea
+                              className="form-control"
+                              value={editP.description}
+                              onChange={(e) =>
+                                setEditField("description", e.target.value)
+                              }
+                              rows={3}
+                            />
+                          </Field>
+                        </div>
+
+                        <div className="col-md-4">
+                          <Field label="Price">
+                            <input
+                              className="form-control"
+                              value={editP.price}
+                              onChange={(e) =>
+                                setEditField("price", e.target.value)
+                              }
+                            />
+                          </Field>
+                        </div>
+
+                        <div className="col-md-4">
+                          <Field label="MRP">
+                            <input
+                              className="form-control"
+                              value={editP.mrp}
+                              onChange={(e) =>
+                                setEditField("mrp", e.target.value)
+                              }
+                            />
+                          </Field>
+                        </div>
+
+                        <div className="col-md-4">
+                          <Field label="Stock">
+                            <input
+                              className="form-control"
+                              value={editP.stock}
+                              onChange={(e) =>
+                                setEditField("stock", e.target.value)
+                              }
+                            />
+                          </Field>
+                        </div>
+
+                        <div className="col-12 d-flex justify-content-end gap-2 mt-2">
+                          <button
+                            onClick={cancelEdit}
+                            className="btn btn-outline-secondary"
                           >
-                            {categories.map((c) => (
-                              <option key={c} value={c}>
-                                {c}
-                              </option>
-                            ))}
-                          </select>
-                        </Field>
-                      </div>
-
-                      <div className="col-md-6">
-                        <Field label="Image URL">
-                          <input
-                            className="form-control"
-                            value={editP.image}
-                            onChange={(e) =>
-                              setEditField("image", e.target.value)
-                            }
-                          />
-                        </Field>
-                      </div>
-
-                      <div className="col-12">
-                        <Field label="Description">
-                          <textarea
-                            className="form-control"
-                            value={editP.description}
-                            onChange={(e) =>
-                              setEditField("description", e.target.value)
-                            }
-                            rows={3}
-                          />
-                        </Field>
-                      </div>
-
-                      <div className="col-md-4">
-                        <Field label="Price">
-                          <input
-                            className="form-control"
-                            value={editP.price}
-                            onChange={(e) =>
-                              setEditField("price", e.target.value)
-                            }
-                          />
-                        </Field>
-                      </div>
-
-                      <div className="col-md-4">
-                        <Field label="MRP">
-                          <input
-                            className="form-control"
-                            value={editP.mrp}
-                            onChange={(e) =>
-                              setEditField("mrp", e.target.value)
-                            }
-                          />
-                        </Field>
-                      </div>
-
-                      <div className="col-md-4">
-                        <Field label="Stock">
-                          <input
-                            className="form-control"
-                            value={editP.stock}
-                            onChange={(e) =>
-                              setEditField("stock", e.target.value)
-                            }
-                          />
-                        </Field>
-                      </div>
-
-                      <div className="col-12 d-flex justify-content-end gap-2 mt-2">
-                        <button
-                          onClick={cancelEdit}
-                          className="btn btn-outline-secondary"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={onSaveEdit}
-                          className="btn btn-primary"
-                        >
-                          Save
-                        </button>
+                            Cancel
+                          </button>
+                          <button
+                            onClick={onSaveEdit}
+                            className="btn btn-primary"
+                          >
+                            Save
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+
+          <div className="d-flex justify-content-center mt-4">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        </>
       )}
     </div>
   );
