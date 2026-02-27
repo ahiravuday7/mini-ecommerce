@@ -1,14 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { fetchProducts } from "../api/products.api";
 import ProductCard from "../components/ProductCard";
 
 export default function Products() {
+  //read query params from URL
+  const [searchParams] = useSearchParams();
+  // reads value from URL
+  const categoryFromUrl = (searchParams.get("category") || "").trim();
+
   const [products, setProducts] = useState([]); // list of products from backend
   const [loading, setLoading] = useState(true); //show loader while fetching
   const [error, setError] = useState(""); // show error message if API fails
 
   const [q, setQ] = useState(""); // search query (user types)
-  const [category, setCategory] = useState(""); // selected category from dropdown
+  const [category, setCategory] = useState(categoryFromUrl); // If URL has category -> dropdown auto-selected & Initialize state using URL ,If no URL -> empty (All Categories)
 
   // categories from current products list
   // With useMemo, it recalculates only when products changes.
@@ -30,9 +36,10 @@ export default function Products() {
     }
   };
 
+  // Sync state when URL changes,clicks a category somewhere else (Home page),gets redirected to:/products?category=Fashion
   useEffect(() => {
-    load(); // initial load on page open
-  }, []);
+    setCategory(categoryFromUrl);
+  }, [categoryFromUrl]);
 
   // Apply filters with small debounce
   useEffect(() => {
