@@ -9,6 +9,14 @@ body {
   /* background: var(--brand-bg); */
 }
 
+/* for Gradient carousel */
+.bg-body-tertiary{
+  background-color: transparent !important;
+}
+/* .bg-body-tertiary{
+  --bs-bg-opacity: 0 !important;
+} */
+
 #root {
   min-height: 100vh;
 }

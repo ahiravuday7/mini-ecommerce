@@ -1,126 +1,81 @@
-import { useEffect, useMemo, useState } from "react";
-import { fetchProducts } from "../api/products.api";
-import ProductCard from "../components/ProductCard";
+// import { Carousel } from "bootstrap/dist/js/bootstrap.bundle.min";
+import Carousel from "../components/Carousel";
 
-export default function Home() {
-  const [products, setProducts] = useState([]); // list of products from backend
-  const [loading, setLoading] = useState(true); //show loader while fetching
-  const [error, setError] = useState(""); // show error message if API fails
-
-  const [q, setQ] = useState(""); // search query (user types)
-  const [category, setCategory] = useState(""); // selected category from dropdown
-
-  // categories from current products list
-  // With useMemo, it recalculates only when products changes.
-  const categories = useMemo(() => {
-    const set = new Set(products.map((p) => p.category).filter(Boolean));
-    return ["", ...Array.from(set)];
-  }, [products]);
-
-  const load = async (params = {}) => {
-    try {
-      setLoading(true); // Start loading
-      setError(""); // Clear old error
-      const { data } = await fetchProducts(params); // Call API
-      setProducts(data); // Store products in state
-    } catch (e) {
-      setError(e?.response?.data?.message || "Failed to load products");
-    } finally {
-      setLoading(false); //always stop loading (success or fail)
-    }
-  };
-
-  useEffect(() => {
-    load(); // initial load on page open
-  }, []);
-
-  // Apply filters with small debounce
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const params = {};
-      if (q.trim()) params.q = q.trim(); // trim() removes whitespace from start/end
-      if (category) params.category = category;
-      load(params);
-    }, 300); // wait 300ms then call backend with params (after you stop typing)
-
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q, category]);
-
+const Home = () => {
   return (
-    <div className="py-2">
-      <div className="mb-4">
-        <h2 className="mb-1">Products</h2>
-        <p className="text-secondary mb-0">
-          Search and filter products (powered by backend API)
-        </p>
+    <>
+      <Carousel />
+      <div>
+        Lorem ipsum dolor sit amet consectetur adipisicing elit. A ad quidem
+        cumque. Sequi eveniet cupiditate sunt provident voluptatum praesentium
+        eaque? Dicta, nam saepe adipisci veniam temporibus nisi eveniet sequi
+        voluptatum, dolores cupiditate laudantium molestias veritatis itaque, a
+        beatae officia tenetur consequatur. Delectus, exercitationem, libero
+        quasi similique qui magni cupiditate labore iusto consequatur odio
+        blanditiis velit nam distinctio voluptates vero neque maxime fuga alias
+        perferendis amet rerum mollitia. A, in. Doloremque ipsum vero, inventore
+        dolore molestias aspernatur placeat earum dolor deserunt natus ea nisi
+        cumque explicabo, eligendi a saepe quae illo error, sit debitis id
+        molestiae. Libero blanditiis nesciunt a esse! Lorem ipsum dolor sit amet
+        consectetur adipisicing elit. Facere accusamus eius pariatur
+        repellendus, similique, inventore sint libero tempore at iure optio,
+        aspernatur aperiam numquam eos saepe reiciendis. Molestiae libero maxime
+        quo deserunt eligendi dolorem mollitia qui, quasi, saepe dolor eum
+        officiis illo vitae dicta repellat beatae sed necessitatibus corporis
+        minima eveniet, praesentium ut nesciunt similique enim. Neque et
+        consequuntur dolores modi, laudantium optio adipisci officia eveniet
+        minima officiis sunt, cum perferendis, quisquam facilis non iure illum.
+        Possimus voluptas fuga minus neque atque dicta pariatur rem, nisi quod
+        cumque dolor magnam impedit facilis maxime cupiditate ab molestias
+        rerum. Placeat sed ex quibusdam. Magni accusantium repellat iusto nobis,
+        animi iste error architecto neque ullam quibusdam necessitatibus.
+        Sapiente nesciunt itaque numquam eius cum aliquam corrupti, placeat
+        nobis, praesentium sequi similique delectus! Consequuntur tempore atque
+        minus, accusantium facere cumque at odio laboriosam ratione officia nisi
+        dolores ducimus amet, repudiandae cupiditate iusto perspiciatis
+        exercitationem consequatur provident necessitatibus reiciendis ipsum
+        ipsa! Tempora porro necessitatibus delectus quae, molestias soluta
+        recusandae quidem assumenda totam similique illum voluptates sint vero
+        quod numquam repudiandae velit ut explicabo eos nostrum aspernatur! Sed
+        voluptatem atque ex cum reprehenderit, id repellendus numquam culpa
+        consequuntur laboriosam, officiis facilis quidem repudiandae nesciunt
+        labore fugiat perspiciatis, deleniti natus quas voluptates! Nam a
+        tenetur reiciendis consequuntur unde odit nisi voluptas fugit, possimus
+        sit, quo doloremque adipisci magnam animi soluta! Exercitationem
+        similique, repellendus voluptates doloremque aliquam maxime omnis
+        molestias nobis minima consequuntur rem odit ad eius perferendis
+        explicabo, quos nam saepe cum? Ducimus, nulla. Molestias hic, labore
+        fuga iste error amet vitae ratione id, eum tenetur ipsam doloremque
+        mollitia voluptatibus delectus molestiae minima, nobis culpa laudantium
+        repellat minus. Error, cum. Fuga eos facere dolorem necessitatibus
+        earum! Veritatis, maxime maiores. Odit, quos laborum illum distinctio
+        non, sit explicabo nemo minima delectus neque iste! Incidunt
+        perspiciatis, iure ipsum hic molestias mollitia accusamus quod nisi id
+        ipsam tempora itaque suscipit error qui consequuntur, perferendis
+        repudiandae possimus minima deleniti officia officiis beatae? Sapiente
+        fuga eum tempore ipsum voluptates possimus eos quas, exercitationem et
+        debitis culpa obcaecati ad. Minima quis ipsam, accusantium illo tenetur
+        sunt deleniti ipsa est adipisci enim quasi vel blanditiis libero magnam
+        quisquam! Fuga officiis adipisci amet dolorem! Eaque ex magnam beatae
+        asperiores ipsa. Aspernatur, quisquam ex quam at, unde eligendi esse
+        repellendus, eum quas iste blanditiis iusto. Eligendi veritatis tempora
+        cumque, eaque veniam illum, cum corrupti voluptates dignissimos porro
+        quisquam commodi placeat esse rerum error minima corporis consequuntur
+        fuga distinctio temporibus nesciunt modi. Tenetur doloremque ab est
+        minima consectetur cupiditate voluptate iste nesciunt iure, obcaecati a,
+        perspiciatis magnam! Tempora amet sunt, adipisci, quasi maxime a
+        possimus corporis obcaecati dolores expedita velit, et commodi ratione
+        temporibus neque illo illum ipsum quam consequuntur molestiae eaque
+        quaerat? Voluptate porro, iure error iste unde rem officiis! Minus
+        voluptates temporibus nesciunt laborum eum modi repudiandae corrupti
+        vitae doloremque quia, quisquam sunt omnis cupiditate unde repellat
+        similique. Natus exercitationem quisquam veniam aut excepturi magnam
+        nesciunt hic corporis nisi, ducimus voluptatum asperiores. Fuga tempore
+        rem voluptate omnis tenetur nesciunt nostrum similique est hic, quod,
+        neque pariatur?
       </div>
-
-      {/* Filters */}
-      <div className="row g-3 mb-4">
-        {/* Search */}
-        <div className="col-md-8">
-          <input
-            className="form-control"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search products (e.g. shoes, band, bottle...)"
-          />
-        </div>
-
-        {/* Category filter */}
-        <div className="col-md-4">
-          <select
-            className="form-select"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-          >
-            {categories.map((c) => (
-              <option key={c || "all"} value={c}>
-                {c ? c : "All Categories"}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* States loading, error, empty */}
-      {loading && (
-        <div className="card border-0 shadow-sm">
-          <div className="card-body d-flex align-items-center gap-2 text-secondary">
-            <div className="spinner-border spinner-border-sm" role="status" />
-            <span>Loading products...</span>
-          </div>
-        </div>
-      )}
-
-      {error && !loading && (
-        <div className="alert alert-danger" role="alert">
-          {error}
-        </div>
-      )}
-
-      {!loading && !error && products.length === 0 && (
-        <div className="card border-0 shadow-sm">
-          <div className="card-body text-center py-5">
-            <h5 className="mb-2">No products found</h5>
-            <p className="text-secondary mb-0">
-              Try a different search or category filter.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Grid of products */}
-      {!loading && !error && products.length > 0 && (
-        <div className="row g-4">
-          {products.map((p) => (
-            <div className="col-sm-6 col-lg-4" key={p._id}>
-              <ProductCard p={p} />
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+    </>
   );
-}
+};
+
+export default Home;
