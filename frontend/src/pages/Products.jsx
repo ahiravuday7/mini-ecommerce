@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { fetchProducts } from "../api/products.api";
 import ProductCard from "../components/ProductCard";
+import Pagination from "../components/Pagination";
+
+const PRODUCTS_PER_PAGE = 6;
 
 export default function Products() {
   //read query params from URL
@@ -15,6 +18,7 @@ export default function Products() {
 
   const [q, setQ] = useState(""); // search query (user types)
   const [category, setCategory] = useState(categoryFromUrl); // If URL has category -> dropdown auto-selected & Initialize state using URL ,If no URL -> empty (All Categories)
+  const [currentPage, setCurrentPage] = useState(1); // When page loads -> starts from page 1
 
   // categories from current products list
   // With useMemo, it recalculates only when products changes.
@@ -22,6 +26,18 @@ export default function Products() {
     const set = new Set(products.map((p) => p.category).filter(Boolean));
     return ["", ...Array.from(set)];
   }, [products]);
+
+  // calculates how many total pages need
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(products.length / PRODUCTS_PER_PAGE)), //Ensures minimum 1 page,Always round UP,
+    [products.length],
+  );
+
+  // It selects only the products for the current page
+  const currentProducts = useMemo(() => {
+    const start = (currentPage - 1) * PRODUCTS_PER_PAGE;
+    return products.slice(start, start + PRODUCTS_PER_PAGE);
+  }, [products, currentPage]);
 
   const load = async (params = {}) => {
     try {
@@ -40,6 +56,16 @@ export default function Products() {
   useEffect(() => {
     setCategory(categoryFromUrl);
   }, [categoryFromUrl]);
+
+  // reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [q, category]);
+
+  // keep page in valid range if results become fewer(current page never exceeds total pages)
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [currentPage, totalPages]);
 
   // Apply filters with small debounce
   useEffect(() => {
@@ -120,13 +146,23 @@ export default function Products() {
 
       {/* Grid of products */}
       {!loading && !error && products.length > 0 && (
-        <div className="row g-4">
-          {products.map((p) => (
-            <div className="col-sm-6 col-lg-4" key={p._id}>
-              <ProductCard p={p} />
-            </div>
-          ))}
-        </div>
+        <>
+          <div className="row g-4">
+            {currentProducts.map((p) => (
+              <div className="col-sm-6 col-lg-4" key={p._id}>
+                <ProductCard p={p} />
+              </div>
+            ))}
+          </div>
+
+          <div className="d-flex justify-content-center mt-4">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        </>
       )}
     </div>
   );
