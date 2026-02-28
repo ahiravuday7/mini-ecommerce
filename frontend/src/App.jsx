@@ -20,6 +20,7 @@ import Products from "./pages/Products";
 
 import AdminRoute from "./components/AdminRoute";
 import UserRoute from "./components/UserRoute";
+import ShopperRoute from "./components/ShopperRoute";
 
 export default function App() {
   return (
@@ -28,17 +29,17 @@ export default function App() {
         <Route
           path="/"
           element={
-            <UserRoute>
+            <ShopperRoute>
               <Home />
-            </UserRoute>
+            </ShopperRoute>
           }
         />
         <Route
           path="/product/:id"
           element={
-            <UserRoute>
+            <ShopperRoute>
               <ProductDetails />
-            </UserRoute>
+            </ShopperRoute>
           }
         />
         <Route
@@ -84,17 +85,17 @@ export default function App() {
         <Route
           path="/faqs"
           element={
-            <UserRoute>
+            <ShopperRoute>
               <FAQs />
-            </UserRoute>
+            </ShopperRoute>
           }
         />
         <Route
           path="/products"
           element={
-            <UserRoute>
+            <ShopperRoute>
               <Products />
-            </UserRoute>
+            </ShopperRoute>
           }
         />
 

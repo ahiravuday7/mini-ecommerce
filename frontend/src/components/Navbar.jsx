@@ -1,13 +1,19 @@
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import UserHamburgerMenu from "./UserHamburgerMenu";
+import AdminHamburgerMenu from "./AdminHamburgerMenu";
 
 const linkClass = ({ isActive }) =>
   `nav-link px-0 px-lg-2 ${isActive ? "fw-bold text-primary" : "text-secondary"}`;
 
 export default function Navbar() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useAuth();
   const isUserOnly = user && !user.isAdmin;
+  const isShopperView = !user || !user.isAdmin;
+  const isAuthPage =
+    location.pathname === "/login" || location.pathname === "/register";
   const brandPath = user?.isAdmin ? "/admin/products" : "/";
 
   const onLogout = async () => {
@@ -27,23 +33,31 @@ export default function Navbar() {
           </Link>
 
           <nav className="nav gap-3 flex-grow-1">
-            {isUserOnly && (
+            {isShopperView && (
               <>
                 <NavLink to="/" className={linkClass}>
                   Home
                 </NavLink>
-                <NavLink to="/products" className={linkClass}>
-                  Products
-                </NavLink>
-                <NavLink to="/cart" className={linkClass}>
-                  Cart
-                </NavLink>
-                <NavLink to="/orders" className={linkClass}>
-                  My Orders
-                </NavLink>
-                <NavLink to="/faqs" className={linkClass}>
-                  FAQs
-                </NavLink>
+                {!isAuthPage && (
+                  <>
+                    <NavLink to="/products" className={linkClass}>
+                      Products
+                    </NavLink>
+                    <NavLink to="/faqs" className={linkClass}>
+                      FAQs
+                    </NavLink>
+                  </>
+                )}
+                {isUserOnly && (
+                  <>
+                    <NavLink to="/cart" className={linkClass}>
+                      Cart
+                    </NavLink>
+                    <NavLink to="/orders" className={linkClass}>
+                      My Orders
+                    </NavLink>
+                  </>
+                )}
               </>
             )}
           </nav>
@@ -89,6 +103,9 @@ export default function Navbar() {
                 </NavLink>
               </>
             )}
+
+            {isShopperView && !isAuthPage && <UserHamburgerMenu />}
+            {user?.isAdmin && !isAuthPage && <AdminHamburgerMenu />}
           </nav>
         </div>
       </div>
