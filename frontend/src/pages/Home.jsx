@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Carousel from "../components/Carousel";
-import { fetchProducts } from "../api/products.api";
+import { useCategories } from "../context/CategoriesContext";
 import "./home.css";
 
 // select manual image for selected categories
@@ -20,48 +19,7 @@ const getCategoryImage = (name, fallback) =>
 
 export default function Home() {
   const navigate = useNavigate();
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        setLoading(true);
-        setError("");
-
-        const { data } = await fetchProducts();
-        const deduped = new Map();
-
-        // Loop over products and extract unique categories
-        (data || []).forEach((product) => {
-          // ensures that if data is null/undefined, still loop over an empty array safely.
-          // convert “many products” -> “unique category list”.
-          const categoryName = (product?.category || "").trim();
-          if (!categoryName) return;
-
-          const key = categoryName.toLowerCase();
-          // ensures you only store the first time you see a category.
-          if (!deduped.has(key)) {
-            // stores: name: original category text (as it appeared first),image: product image (used as fallback later)
-            deduped.set(key, {
-              name: categoryName,
-              image: product?.image || "",
-            });
-          }
-        });
-
-        // Convert Map values to array and set state ,deduped.values() gives only the stored {name, image} objects.
-        setCategories(Array.from(deduped.values()));
-      } catch (e) {
-        setError(e?.response?.data?.message || "Failed to load categories");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadCategories();
-  }, []);
+  const { categories, loading, error } = useCategories();
 
   const handleCategoryClick = (categoryName) => {
     navigate(`/products?category=${encodeURIComponent(categoryName)}`);
