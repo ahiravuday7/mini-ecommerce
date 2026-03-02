@@ -3,6 +3,8 @@ const generateToken = require("../utils/generateToken");
 const asyncHandler = require("../utils/asyncHandler");
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const PASSWORD_REGEX =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
 // Register
 const registerUser = asyncHandler(async (req, res) => {
@@ -20,6 +22,13 @@ const registerUser = asyncHandler(async (req, res) => {
   if (password !== confirmPassword) {
     res.status(400);
     throw new Error("Password and confirm password do not match");
+  }
+
+  if (!PASSWORD_REGEX.test(password)) {
+    res.status(400);
+    throw new Error(
+      "Password must be at least 8 characters and include uppercase, lowercase, number, and special character",
+    );
   }
 
   if (email && !EMAIL_REGEX.test(email)) {

@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const PASSWORD_REGEX =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
 export default function Register() {
   const navigate = useNavigate();
@@ -21,6 +23,13 @@ export default function Register() {
 
     if (password !== confirmPassword) {
       setError("Password and confirm password do not match");
+      return;
+    }
+
+    if (!PASSWORD_REGEX.test(password)) {
+      setError(
+        "Password must be at least 8 characters and include uppercase, lowercase, number, and special character",
+      );
       return;
     }
 
@@ -100,7 +109,8 @@ export default function Register() {
                 className="form-control rounded-3"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="min 6 chars"
+                placeholder="Min 8, Aa1@ format"
+                title="Minimum 8 characters, with uppercase, lowercase, number, and special character"
                 required
               />
             </div>
