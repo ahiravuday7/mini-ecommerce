@@ -4,15 +4,45 @@ const asyncHandler = require("../utils/asyncHandler");
 
 // Register
 const registerUser = asyncHandler(async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, password, confirmPassword, shippingAddress } = req.body;
+  const email = req.body.email?.trim().toLowerCase();
+  const phone = req.body.phone?.trim();
 
-  const userExists = await User.findOne({ email });
+  if (!name || !password || !confirmPassword || (!email && !phone)) {
+    res.status(400);
+    throw new Error(
+      "Name, email or phone, password, and confirm password are required",
+    );
+  }
+
+  if (password !== confirmPassword) {
+    res.status(400);
+    throw new Error("Password and confirm password do not match");
+  }
+
+  const existsQuery = [];
+  if (email) existsQuery.push({ email });
+  if (phone) existsQuery.push({ phone });
+
+  const userExists = await User.findOne({ $or: existsQuery });
   if (userExists) {
     res.status(400);
+    if (email && userExists.email === email) {
+      throw new Error("User with this email already exists");
+    }
+    if (phone && userExists.phone === phone) {
+      throw new Error("User with this phone already exists");
+    }
     throw new Error("User already exists");
   }
 
-  const user = await User.create({ name, email, password });
+  const user = await User.create({
+    name,
+    email,
+    password,
+    phone,
+    shippingAddress,
+  });
 
   generateToken(res, user._id);
 
@@ -20,15 +50,26 @@ const registerUser = asyncHandler(async (req, res) => {
     _id: user._id,
     name: user.name,
     email: user.email,
+    phone: user.phone,
+    shippingAddress: user.shippingAddress,
     isAdmin: user.isAdmin,
   }); // HTTP status 201 (Created new User & Returns selected user data as JSON (without password))
 });
 
 // Login
 const loginUser = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+  const { emailOrPhone, password } = req.body;
+  const identifier = emailOrPhone?.trim();
 
-  const user = await User.findOne({ email });
+  if (!identifier || !password) {
+    res.status(400);
+    throw new Error("Email or phone and password are required");
+  }
+
+  const isEmail = identifier.includes("@");
+  const user = await User.findOne(
+    isEmail ? { email: identifier.toLowerCase() } : { phone: identifier },
+  );
 
   if (user && (await user.matchPassword(password))) {
     generateToken(res, user._id);
@@ -37,11 +78,13 @@ const loginUser = asyncHandler(async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
+      phone: user.phone,
+      shippingAddress: user.shippingAddress,
       isAdmin: user.isAdmin,
     }); // HTTP status 200 (OK), Returns selected user data as JSON
   } else {
     res.status(401);
-    throw new Error("Invalid email or password");
+    throw new Error("Invalid email/phone or password");
   }
 });
 

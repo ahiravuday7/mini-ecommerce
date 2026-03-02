@@ -6,7 +6,7 @@ export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const [email, setEmail] = useState("");
+  const [emailOrPhone, setEmailOrPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -16,7 +16,7 @@ export default function Login() {
     try {
       setLoading(true);
       setError("");
-      await login({ email, password });
+      await login({ emailOrPhone, password });
       navigate("/");
     } catch (err) {
       setError(err?.response?.data?.message || "Login failed");
@@ -48,13 +48,13 @@ export default function Login() {
 
           <form onSubmit={onSubmit} className="mt-4">
             <div className="mb-3">
-              <label className="form-label ">Email</label>
+              <label className="form-label ">Email or Phone</label>
               <input
-                type="email"
+                type="text"
                 className="form-control rounded-3"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="uday@test.com"
+                value={emailOrPhone}
+                onChange={(e) => setEmailOrPhone(e.target.value)}
+                placeholder="uday@test.com or 9876543210"
                 required
               />
             </div>
