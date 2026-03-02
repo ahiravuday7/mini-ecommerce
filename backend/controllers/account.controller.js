@@ -2,6 +2,7 @@ const User = require("../models/User");
 const asyncHandler = require("../utils/asyncHandler");
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const PHONE_REGEX = /^[6-9]\d{9}$/;
 
 // Checks if value is a string,If yes -> removes spaces from start and end,If not -> returns the value unchanged
 const trimIfString = (value) =>
@@ -104,6 +105,11 @@ const updateMyProfile = asyncHandler(async (req, res) => {
     if (!phone) {
       user.phone = undefined;
     } else {
+      if (!PHONE_REGEX.test(phone)) {
+        res.status(400);
+        throw new Error("Invalid phone format");
+      }
+
       // Case 2: Check duplicate
       const phoneExists = await User.findOne({
         phone,
@@ -188,6 +194,11 @@ const updateMyShippingAddress = asyncHandler(async (req, res) => {
   // If country is not set (or is empty/falsey), you default it to "India".
   if (!existingAddress.country) {
     existingAddress.country = "India";
+  }
+
+  if (existingAddress.phone && !PHONE_REGEX.test(existingAddress.phone)) {
+    res.status(400);
+    throw new Error("Invalid shipping phone format");
   }
 
   user.shippingAddress = existingAddress;

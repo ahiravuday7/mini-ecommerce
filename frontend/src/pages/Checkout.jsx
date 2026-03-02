@@ -5,6 +5,8 @@ import { placeOrder } from "../api/orders.api";
 import { getMyAccount } from "../api/account.api";
 import { useAuth } from "../context/AuthContext";
 
+const PHONE_REGEX = /^[6-9]\d{9}$/;
+
 export default function Checkout() {
   const navigate = useNavigate();
   const { user, booting } = useAuth();
@@ -110,6 +112,9 @@ export default function Checkout() {
   const validate = () => {
     if (!form.fullName.trim()) return "Full name is required";
     if (!form.phone.trim()) return "Phone is required";
+    if (!PHONE_REGEX.test(form.phone.trim())) {
+      return "Phone must be a valid Indian mobile number";
+    }
     if (!form.addressLine1.trim()) return "Address Line 1 is required";
     if (!form.city.trim()) return "City is required";
     if (!form.state.trim()) return "State is required";
@@ -229,6 +234,8 @@ export default function Checkout() {
                       <input
                         className="form-control"
                         value={form.phone}
+                        inputMode="numeric"
+                        pattern="^[6-9]\\d{9}$"
                         onChange={(e) => setField("phone", e.target.value)}
                         placeholder="9999999999"
                       />

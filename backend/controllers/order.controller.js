@@ -3,6 +3,8 @@ const Cart = require("../models/Cart");
 const Product = require("../models/Product");
 const asyncHandler = require("../utils/asyncHandler");
 
+const PHONE_REGEX = /^[6-9]\d{9}$/;
+
 // helper (Round numbers to 2 decimal places)
 const round2 = (num) => Math.round((num + Number.EPSILON) * 100) / 100;
 
@@ -22,6 +24,11 @@ const placeOrder = asyncHandler(async (req, res) => {
   ) {
     res.status(400);
     throw new Error("Shipping address is incomplete");
+  }
+
+  if (!PHONE_REGEX.test(String(shippingAddress.phone).trim())) {
+    res.status(400);
+    throw new Error("Invalid shipping phone format");
   }
 
   // // Get User Cart & replaces product ID with full product data

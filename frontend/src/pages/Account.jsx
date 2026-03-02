@@ -8,6 +8,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const PHONE_REGEX = /^[6-9]\d{9}$/;
 
 // Default shipping address structure
 const emptyAddress = {
@@ -105,8 +106,8 @@ export default function Account() {
       return;
     }
 
-    if (trimmedPhone && !/^\d{10}$/.test(trimmedPhone)) {
-      setProfileError("Phone must be 10 digits");
+    if (trimmedPhone && !PHONE_REGEX.test(trimmedPhone)) {
+      setProfileError("Phone must be a valid Indian mobile number");
       return;
     }
     //Validation only runs when:email is editable (!emailLocked),AND user entered something
@@ -148,8 +149,8 @@ export default function Account() {
     const trimmedPhone = address.phone.trim();
     const trimmedPincode = address.pincode.trim();
 
-    if (trimmedPhone && !/^\d{10}$/.test(trimmedPhone)) {
-      setAddressError("Shipping phone must be 10 digits");
+    if (trimmedPhone && !PHONE_REGEX.test(trimmedPhone)) {
+      setAddressError("Shipping phone must be a valid Indian mobile number");
       return;
     }
     if (trimmedPincode && !/^\d{6}$/.test(trimmedPincode)) {
@@ -271,7 +272,7 @@ export default function Account() {
                     className="form-control"
                     value={profile.phone}
                     inputMode="numeric"
-                    pattern="^[0-9]{10}$"
+                    pattern="^[6-9]\\d{9}$"
                     onChange={(e) =>
                       setProfile((p) => ({ ...p, phone: e.target.value }))
                     }
@@ -320,7 +321,7 @@ export default function Account() {
                       className="form-control"
                       value={address.phone}
                       inputMode="numeric"
-                      pattern="^[0-9]{10}$"
+                      pattern="^[6-9]\\d{9}$"
                       onChange={(e) =>
                         setAddress((a) => ({ ...a, phone: e.target.value }))
                       }

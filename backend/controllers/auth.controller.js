@@ -3,6 +3,7 @@ const generateToken = require("../utils/generateToken");
 const asyncHandler = require("../utils/asyncHandler");
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const PHONE_REGEX = /^[6-9]\d{9}$/;
 const PASSWORD_REGEX =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
@@ -34,6 +35,10 @@ const registerUser = asyncHandler(async (req, res) => {
   if (email && !EMAIL_REGEX.test(email)) {
     res.status(400);
     throw new Error("Invalid email format");
+  }
+  if (phone && !PHONE_REGEX.test(phone)) {
+    res.status(400);
+    throw new Error("Invalid phone format");
   }
 
   const existsQuery = [];
@@ -89,6 +94,10 @@ const loginUser = asyncHandler(async (req, res) => {
   if (looksLikeEmail && !isEmail) {
     res.status(400);
     throw new Error("Invalid email format");
+  }
+  if (!isEmail && !PHONE_REGEX.test(identifier)) {
+    res.status(400);
+    throw new Error("Invalid phone format");
   }
 
   const user = await User.findOne(

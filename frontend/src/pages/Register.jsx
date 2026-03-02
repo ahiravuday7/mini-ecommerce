@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const PHONE_REGEX = /^[6-9]\d{9}$/;
 const PASSWORD_REGEX =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
@@ -42,6 +43,10 @@ export default function Register() {
 
       if (looksLikeEmail && !isEmail) {
         setError("Invalid email format");
+        return;
+      }
+      if (!isEmail && !PHONE_REGEX.test(identifier)) {
+        setError("Invalid phone format");
         return;
       }
 

@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const PHONE_REGEX = /^[6-9]\d{9}$/;
 
 export default function Login() {
   const navigate = useNavigate();
@@ -24,11 +25,15 @@ export default function Login() {
       setError("Invalid email format");
       return;
     }
+    if (!isEmail && !PHONE_REGEX.test(identifier)) {
+      setError("Invalid phone format");
+      return;
+    }
 
     try {
       setLoading(true);
       setError("");
-      await login({ emailOrPhone, password });
+      await login({ emailOrPhone: identifier, password });
       navigate("/");
     } catch (err) {
       setError(err?.response?.data?.message || "Login failed");
