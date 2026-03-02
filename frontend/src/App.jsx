@@ -52,8 +52,22 @@ export default function App() {
           }
         />
 
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route
+          path="/login"
+          element={
+            <ShopperRoute guestOnly>
+              <Login />
+            </ShopperRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <ShopperRoute guestOnly>
+              <Register />
+            </ShopperRoute>
+          }
+        />
 
         <Route
           path="/checkout"

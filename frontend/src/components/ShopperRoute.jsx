@@ -1,7 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-export default function ShopperRoute({ children }) {
+export default function ShopperRoute({ children, guestOnly = false }) {
   const { user, booting } = useAuth();
 
   if (booting) {
@@ -11,6 +11,12 @@ export default function ShopperRoute({ children }) {
         <span>Checking session...</span>
       </div>
     );
+  }
+
+  if (guestOnly) {
+    if (user?.isAdmin) return <Navigate to="/admin/products" replace />;
+    if (user) return <Navigate to="/" replace />;
+    return children;
   }
 
   // guest or normal user can access; only admin is blocked

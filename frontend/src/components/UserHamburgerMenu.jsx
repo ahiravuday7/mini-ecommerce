@@ -24,7 +24,6 @@ export default function UserHamburgerMenu() {
   const helpAndSettingsItems = [
     { label: "Your Account", to: "/account" },
     { label: "Customer Service", to: "/contact" },
-    { label: "Sign in", to: "/login" },
   ];
 
   const handleNavigate = (to) => {
