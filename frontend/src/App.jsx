@@ -8,6 +8,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Checkout from "./pages/Checkout";
 import MyOrders from "./pages/MyOrders";
+import Account from "./pages/Account";
 import AdminProducts from "./pages/AdminProducts";
 import OrderDetails from "./pages/OrderDetails";
 import About from "./pages/About";
@@ -67,6 +68,14 @@ export default function App() {
           element={
             <UserRoute>
               <MyOrders />
+            </UserRoute>
+          }
+        />
+        <Route
+          path="/account"
+          element={
+            <UserRoute>
+              <Account />
             </UserRoute>
           }
         />

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { getCart } from "../api/cart.api";
 import { placeOrder } from "../api/orders.api";
+import { getMyAccount } from "../api/account.api";
 import { useAuth } from "../context/AuthContext";
 
 export default function Checkout() {
@@ -20,6 +21,7 @@ export default function Checkout() {
     phone: "",
     addressLine1: "",
     addressLine2: "",
+    landmark: "",
     city: "",
     state: "",
     pincode: "",
@@ -41,13 +43,48 @@ export default function Checkout() {
     return { itemsPrice, shipping, tax, total };
   }, [items]);
 
-  // Load cart
-  const loadCart = async () => {
+  // Load cart + prefill shipping from account (if available)
+  const loadCheckoutData = async () => {
     try {
       setLoading(true);
       setError("");
-      const { data } = await getCart();
-      setCart(data);
+
+      // Call Cart + Account APIs in parallel
+      const [cartResult, accountResult] = await Promise.allSettled([
+        getCart(),
+        getMyAccount(),
+      ]);
+
+      // If cart API succeeded -> store cart data in state
+      if (cartResult.status === "fulfilled") {
+        setCart(cartResult.value.data);
+      } else {
+        setCart(null);
+        setError(
+          cartResult.reason?.response?.data?.message || "Failed to load cart",
+        );
+      }
+
+      if (accountResult.status === "fulfilled") {
+        const accountUser =
+          accountResult.value.data?.user || accountResult.value.data || {};
+        const saved = accountUser?.shippingAddress || {}; //extract shippingAddress into saved , So saved becomes the “saved shipping address”.
+
+        // Auto-fill the checkout form with saved address
+        // take the existing form (prev),For each field:If saved value exists -> use saved value,Else -> keep whatever was already in the form
+        setForm((prev) => ({
+          ...prev,
+          fullName: saved.fullName || prev.fullName,
+          phone: saved.phone || prev.phone,
+          addressLine1: saved.addressLine1 || prev.addressLine1,
+          addressLine2: saved.addressLine2 || prev.addressLine2,
+          landmark: saved.landmark || prev.landmark,
+          city: saved.city || prev.city,
+          state: saved.state || prev.state,
+          pincode: saved.pincode || prev.pincode,
+          country: saved.country || prev.country || "India",
+        }));
+      }
     } catch (e) {
       setError(e?.response?.data?.message || "Failed to load cart");
       setCart(null);
@@ -63,7 +100,7 @@ export default function Checkout() {
 
   // Load cart when user is logged in
   useEffect(() => {
-    if (!booting && user) loadCart();
+    if (!booting && user) loadCheckoutData();
   }, [booting, user]);
 
   // Update form fields
@@ -98,6 +135,7 @@ export default function Checkout() {
           phone: form.phone.trim(),
           addressLine1: form.addressLine1.trim(),
           addressLine2: form.addressLine2.trim(),
+          landmark: form.landmark.trim(),
           city: form.city.trim(),
           state: form.state.trim(),
           pincode: form.pincode.trim(),
@@ -218,7 +256,18 @@ export default function Checkout() {
                         onChange={(e) =>
                           setField("addressLine2", e.target.value)
                         }
-                        placeholder="Landmark"
+                        placeholder="Apartment, floor, etc."
+                      />
+                    </Field>
+                  </div>
+
+                  <div className="col-12">
+                    <Field label="Landmark (optional)">
+                      <input
+                        className="form-control"
+                        value={form.landmark}
+                        onChange={(e) => setField("landmark", e.target.value)}
+                        placeholder="Near city mall"
                       />
                     </Field>
                   </div>

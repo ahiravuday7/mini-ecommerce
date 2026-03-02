@@ -24,6 +24,7 @@ const shippingAddressSchema = new mongoose.Schema(
     phone: { type: String, required: true },
     addressLine1: { type: String, required: true },
     addressLine2: { type: String, default: "" },
+    landmark: { type: String, default: "" },
     city: { type: String, required: true },
     state: { type: String, required: true },
     pincode: { type: String, required: true },

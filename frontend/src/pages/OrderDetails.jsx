@@ -129,6 +129,9 @@ export default function OrderDetails() {
                     {order.shippingAddress?.addressLine2 ? (
                       <div>{order.shippingAddress?.addressLine2}</div>
                     ) : null}
+                    {order.shippingAddress?.landmark ? (
+                      <div>{order.shippingAddress?.landmark}</div>
+                    ) : null}
                     <div>
                       {order.shippingAddress?.city},{" "}
                       {order.shippingAddress?.state} -{" "}
