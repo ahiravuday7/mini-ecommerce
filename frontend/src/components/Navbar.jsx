@@ -43,16 +43,10 @@ export default function Navbar() {
                     <NavLink to="/products" className={linkClass}>
                       Products
                     </NavLink>
-                    <NavLink to="/faqs" className={linkClass}>
-                      FAQs
-                    </NavLink>
                   </>
                 )}
                 {isUserOnly && (
                   <>
-                    <NavLink to="/account" className={linkClass}>
-                      My Account
-                    </NavLink>
                     <NavLink to="/cart" className={linkClass}>
                       Cart
                     </NavLink>
