@@ -7,6 +7,7 @@ import {
 } from "../api/account.api";
 import { useAuth } from "../context/AuthContext";
 
+// Default shipping address structure
 const emptyAddress = {
   fullName: "",
   phone: "",
@@ -19,6 +20,7 @@ const emptyAddress = {
   country: "India",
 };
 
+// If backend has partial address (missing fields), this fills missing ones from emptyAddress.
 const withAddressDefaults = (address) => ({
   ...emptyAddress,
   ...(address || {}),
@@ -28,90 +30,148 @@ export default function Account() {
   const navigate = useNavigate();
   const { user, booting, updateUser } = useAuth();
 
+  // Profile & Address form values
   const [profile, setProfile] = useState({ name: "", email: "", phone: "" });
+  const [emailLocked, setEmailLocked] = useState(false); //Can user edit email?
   const [address, setAddress] = useState(emptyAddress);
 
+  // Loading / saving flags
   const [loading, setLoading] = useState(true);
   const [profileSaving, setProfileSaving] = useState(false);
   const [addressSaving, setAddressSaving] = useState(false);
 
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  //Errors/success messages
+  const [loadError, setLoadError] = useState("");
+  const [profileError, setProfileError] = useState("");
+  const [profileSuccess, setProfileSuccess] = useState("");
+  const [addressError, setAddressError] = useState("");
+  const [addressSuccess, setAddressSuccess] = useState("");
 
+  // get user data from:AuthContext user,OR from getMyAccount(),OR after profile/address update API,call syncFromUser() to update UI form fields.So forms always display latest data.
   const syncFromUser = (accountUser) => {
     setProfile({
       name: accountUser?.name || "",
       email: accountUser?.email || "",
       phone: accountUser?.phone || "",
     });
+    // If user already has email -> lock input,If user doesn’t have email -> allow input
+    setEmailLocked(Boolean(accountUser?.email));
     setAddress(withAddressDefaults(accountUser?.shippingAddress));
   };
 
+  //fetch latest user data from backend
   const loadAccount = async () => {
     try {
       setLoading(true);
-      setError("");
+      setLoadError("");
       const { data } = await getMyAccount();
       const accountUser = data?.user || data;
       syncFromUser(accountUser);
     } catch (e) {
-      setError(e?.response?.data?.message || "Failed to load account");
+      setLoadError(e?.response?.data?.message || "Failed to load account");
     } finally {
       setLoading(false);
     }
   };
 
+  // Redirect if not logged in
   useEffect(() => {
     if (!booting && !user) navigate("/login");
   }, [booting, user, navigate]);
 
+  //Fill form immediately from AuthContext user, This gives fast UI: you don’t wait for API call.
+  useEffect(() => {
+    if (!booting && user) syncFromUser(user);
+  }, [booting, user]);
+
+  // Fetch fresh data from backend when user id exists
   useEffect(() => {
     if (!booting && user?._id) loadAccount();
   }, [booting, user?._id]);
 
+  //Profile submit handler
   const onProfileSubmit = async (e) => {
     e.preventDefault();
+
+    // Validation
+    const trimmedName = profile.name.trim();
+    const trimmedPhone = profile.phone.trim();
+    const trimmedEmail = profile.email.trim().toLowerCase();
+
+    if (!trimmedName) {
+      setProfileError("Name is required");
+      return;
+    }
+
+    if (trimmedPhone && !/^\d{10}$/.test(trimmedPhone)) {
+      setProfileError("Phone must be 10 digits");
+      return;
+    }
+    //Validation only runs when:email is editable (!emailLocked),AND user entered something
+    if (!emailLocked && trimmedEmail && !/^\S+@\S+\.\S+$/.test(trimmedEmail)) {
+      setProfileError("Please enter a valid email address");
+      return;
+    }
+
     try {
       setProfileSaving(true);
-      setError("");
-      setSuccess("");
+      setProfileError("");
+      setProfileSuccess("");
 
+      // API call
       const payload = {
-        name: profile.name,
-        email: profile.email,
-        phone: profile.phone,
+        name: trimmedName,
+        phone: trimmedPhone,
+        // email locked- emailLocked = true,email not locked- emailLocked = false
+        ...(!emailLocked && trimmedEmail ? { email: trimmedEmail } : {}),
       };
 
       const { data } = await updateMyProfile(payload);
       const updatedUser = data?.user || data;
-      syncFromUser(updatedUser);
-      updateUser(updatedUser);
-      setSuccess("Profile updated successfully");
+      syncFromUser(updatedUser); //update local form state via syncFromUser
+      updateUser(updatedUser); //update global auth user via updateUser
+      setProfileSuccess("Profile updated successfully");
     } catch (e) {
-      setError(e?.response?.data?.message || "Failed to update profile");
+      setProfileError(e?.response?.data?.message || "Failed to update profile");
     } finally {
       setProfileSaving(false);
     }
   };
 
+  // Address submit handler
   const onAddressSubmit = async (e) => {
     e.preventDefault();
+
+    // Validation;
+    const trimmedPhone = address.phone.trim();
+    const trimmedPincode = address.pincode.trim();
+
+    if (trimmedPhone && !/^\d{10}$/.test(trimmedPhone)) {
+      setAddressError("Shipping phone must be 10 digits");
+      return;
+    }
+    if (trimmedPincode && !/^\d{6}$/.test(trimmedPincode)) {
+      setAddressError("Pincode must be 6 digits");
+      return;
+    }
+
     try {
       setAddressSaving(true);
-      setError("");
-      setSuccess("");
+      setAddressError("");
+      setAddressSuccess("");
 
+      // Payload shape
       const payload = {
         shippingAddress: {
-          fullName: address.fullName,
-          phone: address.phone,
-          addressLine1: address.addressLine1,
-          addressLine2: address.addressLine2,
-          landmark: address.landmark,
-          city: address.city,
-          state: address.state,
-          pincode: address.pincode,
-          country: address.country,
+          fullName: address.fullName.trim(),
+          phone: trimmedPhone,
+          addressLine1: address.addressLine1.trim(),
+          addressLine2: address.addressLine2.trim(),
+          landmark: address.landmark.trim(),
+          city: address.city.trim(),
+          state: address.state.trim(),
+          pincode: trimmedPincode,
+          country: address.country.trim() || "India",
         },
       };
 
@@ -119,9 +179,9 @@ export default function Account() {
       const updatedUser = data?.user || data;
       syncFromUser(updatedUser);
       updateUser(updatedUser);
-      setSuccess("Shipping address updated successfully");
+      setAddressSuccess("Shipping address updated successfully");
     } catch (e) {
-      setError(
+      setAddressError(
         e?.response?.data?.message || "Failed to update shipping address",
       );
     } finally {
@@ -129,6 +189,7 @@ export default function Account() {
     }
   };
 
+  // Loading UI
   if (booting || loading) {
     return (
       <div className="card border-0 shadow-sm">
@@ -156,14 +217,19 @@ export default function Account() {
         </Link>
       </div>
 
-      {error && <div className="alert alert-danger">{error}</div>}
-      {success && <div className="alert alert-success">{success}</div>}
+      {loadError && <div className="alert alert-danger">{loadError}</div>}
 
       <div className="row g-3">
         <div className="col-12 col-lg-6">
           <div className="card border-0 shadow-sm h-100">
             <div className="card-body">
               <h5 className="mb-3">Profile Details</h5>
+              {profileError && (
+                <div className="alert alert-danger">{profileError}</div>
+              )}
+              {profileSuccess && (
+                <div className="alert alert-success">{profileSuccess}</div>
+              )}
               <form onSubmit={onProfileSubmit}>
                 <div className="mb-3">
                   <label className="form-label">Name</label>
@@ -183,11 +249,18 @@ export default function Account() {
                     type="email"
                     className="form-control"
                     value={profile.email}
+                    disabled={emailLocked}
                     onChange={(e) =>
                       setProfile((p) => ({ ...p, email: e.target.value }))
                     }
-                    placeholder="your@email.com"
+                    placeholder={emailLocked ? "" : "your@email.com"}
                   />
+                  <small className="text-secondary">
+                    {/* Before adding → “you can add once”,After adding → “you can’t change” */}
+                    {emailLocked
+                      ? "Email change requires verification."
+                      : "You can add email once. After saving, it becomes read-only."}
+                  </small>
                 </div>
 
                 <div className="mb-3">
@@ -195,10 +268,12 @@ export default function Account() {
                   <input
                     className="form-control"
                     value={profile.phone}
+                    inputMode="numeric"
+                    pattern="^[0-9]{10}$"
                     onChange={(e) =>
                       setProfile((p) => ({ ...p, phone: e.target.value }))
                     }
-                    placeholder="9876543210"
+                    placeholder="10-digit mobile"
                   />
                 </div>
 
@@ -218,6 +293,12 @@ export default function Account() {
           <div className="card border-0 shadow-sm h-100">
             <div className="card-body">
               <h5 className="mb-3">Shipping Address</h5>
+              {addressError && (
+                <div className="alert alert-danger">{addressError}</div>
+              )}
+              {addressSuccess && (
+                <div className="alert alert-success">{addressSuccess}</div>
+              )}
               <form onSubmit={onAddressSubmit}>
                 <div className="row g-3">
                   <div className="col-12">
@@ -236,9 +317,12 @@ export default function Account() {
                     <input
                       className="form-control"
                       value={address.phone}
+                      inputMode="numeric"
+                      pattern="^[0-9]{10}$"
                       onChange={(e) =>
                         setAddress((a) => ({ ...a, phone: e.target.value }))
                       }
+                      placeholder="10-digit mobile"
                     />
                   </div>
 
@@ -308,9 +392,12 @@ export default function Account() {
                     <input
                       className="form-control"
                       value={address.pincode}
+                      inputMode="numeric"
+                      pattern="^[0-9]{6}$"
                       onChange={(e) =>
                         setAddress((a) => ({ ...a, pincode: e.target.value }))
                       }
+                      placeholder="6-digit pincode"
                     />
                   </div>
 
