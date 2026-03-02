@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
 export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -13,6 +15,16 @@ export default function Login() {
 
   const onSubmit = async (e) => {
     e.preventDefault();
+
+    const identifier = emailOrPhone.trim();
+    const looksLikeEmail = identifier.includes("@");
+    const isEmail = EMAIL_REGEX.test(identifier.toLowerCase());
+
+    if (looksLikeEmail && !isEmail) {
+      setError("Invalid email format");
+      return;
+    }
+
     try {
       setLoading(true);
       setError("");

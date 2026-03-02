@@ -2,6 +2,8 @@ const User = require("../models/User");
 const generateToken = require("../utils/generateToken");
 const asyncHandler = require("../utils/asyncHandler");
 
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
 // Register
 const registerUser = asyncHandler(async (req, res) => {
   const { name, password, confirmPassword, shippingAddress } = req.body;
@@ -18,6 +20,11 @@ const registerUser = asyncHandler(async (req, res) => {
   if (password !== confirmPassword) {
     res.status(400);
     throw new Error("Password and confirm password do not match");
+  }
+
+  if (email && !EMAIL_REGEX.test(email)) {
+    res.status(400);
+    throw new Error("Invalid email format");
   }
 
   const existsQuery = [];
@@ -66,9 +73,17 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new Error("Email or phone and password are required");
   }
 
-  const isEmail = identifier.includes("@");
+  const normalizedIdentifier = identifier.toLowerCase();
+  const looksLikeEmail = identifier.includes("@");
+  const isEmail = EMAIL_REGEX.test(normalizedIdentifier);
+
+  if (looksLikeEmail && !isEmail) {
+    res.status(400);
+    throw new Error("Invalid email format");
+  }
+
   const user = await User.findOne(
-    isEmail ? { email: identifier.toLowerCase() } : { phone: identifier },
+    isEmail ? { email: normalizedIdentifier } : { phone: identifier },
   );
 
   if (user && (await user.matchPassword(password))) {

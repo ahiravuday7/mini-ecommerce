@@ -1,6 +1,8 @@
 const User = require("../models/User");
 const asyncHandler = require("../utils/asyncHandler");
 
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
 // Checks if value is a string,If yes -> removes spaces from start and end,If not -> returns the value unchanged
 const trimIfString = (value) =>
   typeof value === "string" ? value.trim() : value;
@@ -74,6 +76,11 @@ const updateMyProfile = asyncHandler(async (req, res) => {
     if (!email) {
       user.email = undefined;
     } else {
+      if (!EMAIL_REGEX.test(email)) {
+        res.status(400);
+        throw new Error("Invalid email format");
+      }
+
       // Case 2: same email exists,but not this user
       const emailExists = await User.findOne({
         email,

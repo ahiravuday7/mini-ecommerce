@@ -7,6 +7,8 @@ import {
 } from "../api/account.api";
 import { useAuth } from "../context/AuthContext";
 
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
 // Default shipping address structure
 const emptyAddress = {
   fullName: "",
@@ -108,7 +110,7 @@ export default function Account() {
       return;
     }
     //Validation only runs when:email is editable (!emailLocked),AND user entered something
-    if (!emailLocked && trimmedEmail && !/^\S+@\S+\.\S+$/.test(trimmedEmail)) {
+    if (!emailLocked && trimmedEmail && !EMAIL_REGEX.test(trimmedEmail)) {
       setProfileError("Please enter a valid email address");
       return;
     }
