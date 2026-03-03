@@ -6,6 +6,9 @@ import {
   adminToggleFaq,
   adminUpdateFaq,
 } from "../api/faqs.api";
+import Pagination from "../components/Pagination";
+
+const FAQS_PER_PAGE = 10;
 
 // Helper functions (reusable utilities)
 const createEmptyFaq = () => ({
@@ -31,6 +34,8 @@ export default function AdminFaqs() {
   const [loading, setLoading] = useState(true); // show loader
   const [error, setError] = useState(""); // show red alert
   const [msg, setMsg] = useState(""); //show success message
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Filters / Search
   const [q, setQ] = useState(""); //search text
@@ -92,6 +97,28 @@ export default function AdminFaqs() {
     if (loading) return "Loading...";
     return `${faqs.length}`;
   }, [faqs.length, loading]);
+
+  // totalPages is always valid, never 0
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(faqs.length / FAQS_PER_PAGE)),
+    [faqs.length],
+  );
+
+  //UI renders only the FAQs for the selected page.
+  const paginatedFaqs = useMemo(() => {
+    const start = (currentPage - 1) * FAQS_PER_PAGE;
+    return faqs.slice(start, start + FAQS_PER_PAGE);
+  }, [faqs, currentPage]);
+
+  //auto-corrects the page to the last valid page
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [currentPage, totalPages]);
+
+  //Reset page to 1 when filters/search change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [q, categoryFilter, langFilter, isActiveFilter, refreshTick]);
 
   const setNewField = (key, value) =>
     setNewFaq((prev) => ({ ...prev, [key]: value }));
@@ -230,10 +257,21 @@ export default function AdminFaqs() {
 
   return (
     <div className="py-2">
-      <h2 className="mb-1">Admin - FAQs</h2>
-      <p className="text-secondary">
-        Manage FAQ entries with create, update, toggle, and delete actions.
-      </p>
+      <div className="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-3">
+        <div>
+          <h2 className="mb-1">Admin - FAQs</h2>
+          <p className="text-secondary mb-0">
+            Manage FAQ entries with create, update, toggle, and delete actions.
+          </p>
+        </div>
+        <button
+          type="button"
+          className={`btn btn-sm ${showCreateForm ? "btn-outline-secondary" : "btn-primary"}`}
+          onClick={() => setShowCreateForm((v) => !v)}
+        >
+          {showCreateForm ? "Close Create Form" : "+ Add FAQ"}
+        </button>
+      </div>
 
       {error && (
         <div className="alert alert-danger" role="alert">
@@ -247,102 +285,113 @@ export default function AdminFaqs() {
         </div>
       )}
 
-      <div className="card border-0 shadow-sm mb-4">
-        <div className="card-body p-4">
-          <h5 className="mb-3">Create FAQ</h5>
-          <form onSubmit={onCreate} className="row g-3">
-            <div className="col-md-6">
-              <Field label="Category">
-                <input
-                  className="form-control"
-                  value={newFaq.category}
-                  onChange={(e) => setNewField("category", e.target.value)}
-                  placeholder="Orders & Shipping"
-                />
-              </Field>
-            </div>
-
-            <div className="col-md-3">
-              <Field label="Language">
-                <select
-                  className="form-select"
-                  value={newFaq.lang}
-                  onChange={(e) => setNewField("lang", e.target.value)}
-                >
-                  <option value="en">English</option>
-                  <option value="hi">Hindi</option>
-                </select>
-              </Field>
-            </div>
-
-            <div className="col-md-3">
-              <Field label="Order">
-                <input
-                  type="number"
-                  className="form-control"
-                  value={newFaq.order}
-                  onChange={(e) => setNewField("order", e.target.value)}
-                />
-              </Field>
-            </div>
-
-            <div className="col-12">
-              <Field label="Question">
-                <input
-                  className="form-control"
-                  value={newFaq.question}
-                  onChange={(e) => setNewField("question", e.target.value)}
-                  placeholder="How can I track my order?"
-                />
-              </Field>
-            </div>
-
-            <div className="col-12">
-              <Field label="Answer">
-                <textarea
-                  className="form-control"
-                  rows={4}
-                  value={newFaq.answer}
-                  onChange={(e) => setNewField("answer", e.target.value)}
-                  placeholder="You can track your order from My Orders page..."
-                />
-              </Field>
-            </div>
-
-            <div className="col-md-8">
-              <Field label="Tags (comma separated)">
-                <input
-                  className="form-control"
-                  value={newFaq.tagsText}
-                  onChange={(e) => setNewField("tagsText", e.target.value)}
-                  placeholder="tracking, delivery, order"
-                />
-              </Field>
-            </div>
-
-            <div className="col-md-4 d-flex align-items-end">
-              <div className="form-check mb-2">
-                <input
-                  id="new-faq-active"
-                  type="checkbox"
-                  className="form-check-input"
-                  checked={newFaq.isActive}
-                  onChange={(e) => setNewField("isActive", e.target.checked)}
-                />
-                <label htmlFor="new-faq-active" className="form-check-label">
-                  Active FAQ
-                </label>
-              </div>
-            </div>
-
-            <div className="col-12 d-grid d-sm-block mt-2">
-              <button disabled={creating} className="btn btn-primary">
-                {creating ? "Creating..." : "Create FAQ"}
+      {showCreateForm && (
+        <div className="card border-0 shadow-sm mb-4">
+          <div className="card-body p-4">
+            <div className="d-flex align-items-center justify-content-between mb-3">
+              <h5 className="mb-0">Create FAQ</h5>
+              <button
+                type="button"
+                className="btn btn-outline-secondary btn-sm"
+                onClick={() => setShowCreateForm(false)}
+              >
+                Cancel
               </button>
             </div>
-          </form>
+            <form onSubmit={onCreate} className="row g-3">
+              <div className="col-md-6">
+                <Field label="Category">
+                  <input
+                    className="form-control"
+                    value={newFaq.category}
+                    onChange={(e) => setNewField("category", e.target.value)}
+                    placeholder="Orders & Shipping"
+                  />
+                </Field>
+              </div>
+
+              <div className="col-md-3">
+                <Field label="Language">
+                  <select
+                    className="form-select"
+                    value={newFaq.lang}
+                    onChange={(e) => setNewField("lang", e.target.value)}
+                  >
+                    <option value="en">English</option>
+                    <option value="hi">Hindi</option>
+                  </select>
+                </Field>
+              </div>
+
+              <div className="col-md-3">
+                <Field label="Order">
+                  <input
+                    type="number"
+                    className="form-control"
+                    value={newFaq.order}
+                    onChange={(e) => setNewField("order", e.target.value)}
+                  />
+                </Field>
+              </div>
+
+              <div className="col-12">
+                <Field label="Question">
+                  <input
+                    className="form-control"
+                    value={newFaq.question}
+                    onChange={(e) => setNewField("question", e.target.value)}
+                    placeholder="How can I track my order?"
+                  />
+                </Field>
+              </div>
+
+              <div className="col-12">
+                <Field label="Answer">
+                  <textarea
+                    className="form-control"
+                    rows={4}
+                    value={newFaq.answer}
+                    onChange={(e) => setNewField("answer", e.target.value)}
+                    placeholder="You can track your order from My Orders page..."
+                  />
+                </Field>
+              </div>
+
+              <div className="col-md-8">
+                <Field label="Tags (comma separated)">
+                  <input
+                    className="form-control"
+                    value={newFaq.tagsText}
+                    onChange={(e) => setNewField("tagsText", e.target.value)}
+                    placeholder="tracking, delivery, order"
+                  />
+                </Field>
+              </div>
+
+              <div className="col-md-4 d-flex align-items-end">
+                <div className="form-check mb-2">
+                  <input
+                    id="new-faq-active"
+                    type="checkbox"
+                    className="form-check-input"
+                    checked={newFaq.isActive}
+                    onChange={(e) => setNewField("isActive", e.target.checked)}
+                  />
+                  <label htmlFor="new-faq-active" className="form-check-label">
+                    Active FAQ
+                  </label>
+                </div>
+              </div>
+
+              <div className="col-12 d-grid d-sm-block mt-2">
+                <button disabled={creating} className="btn btn-primary">
+                  {creating ? "Creating..." : "Create FAQ"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="card border-0 shadow-sm mb-4">
         <div className="card-body p-4">
@@ -445,7 +494,7 @@ export default function AdminFaqs() {
         </div>
       ) : (
         <div className="d-grid gap-3">
-          {faqs.map((faq) => (
+          {paginatedFaqs.map((faq) => (
             <div key={faq._id} className="card border-0 shadow-sm">
               <div className="card-body">
                 <div className="d-flex flex-column flex-lg-row gap-3 justify-content-between">
@@ -634,6 +683,14 @@ export default function AdminFaqs() {
               </div>
             </div>
           ))}
+
+          <div className="d-flex justify-content-center mt-2">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
         </div>
       )}
     </div>

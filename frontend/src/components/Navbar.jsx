@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import UserHamburgerMenu from "./UserHamburgerMenu";
@@ -16,11 +17,28 @@ export default function Navbar() {
   const isAuthPage =
     location.pathname === "/login" || location.pathname === "/register";
   const brandPath = user?.isAdmin ? "/admin" : "/";
+  const [showManagementMenu, setShowManagementMenu] = useState(false);
+  const managementMenuRef = useRef(null);
 
   const onLogout = async () => {
     await logout();
     navigate("/login");
   };
+
+  useEffect(() => {
+    const onClickOutside = (event) => {
+      if (!managementMenuRef.current?.contains(event.target)) {
+        setShowManagementMenu(false);
+      }
+    };
+
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
+
+  useEffect(() => {
+    setShowManagementMenu(false);
+  }, [location.pathname, location.search]);
 
   return (
     <header className="bg-white border-bottom sticky-top shadow-sm">
@@ -70,18 +88,41 @@ export default function Navbar() {
                     >
                       Dashboard
                     </Link>
-                    <Link
-                      to="/admin/products"
-                      className="btn btn-outline-primary btn-sm"
-                    >
-                      Products
-                    </Link>
-                    <Link
-                      to="/admin/faqs"
-                      className="btn btn-outline-primary btn-sm"
-                    >
-                      FAQs
-                    </Link>
+                    <div className="position-relative" ref={managementMenuRef}>
+                      <button
+                        className="btn btn-outline-primary btn-sm dropdown-toggle"
+                        type="button"
+                        aria-expanded={showManagementMenu}
+                        onClick={() => setShowManagementMenu((v) => !v)}
+                      >
+                        Management
+                      </button>
+                      {showManagementMenu && (
+                        <ul
+                          className="dropdown-menu dropdown-menu-end show"
+                          style={{ display: "block" }}
+                        >
+                          <li>
+                            <Link
+                              className="dropdown-item"
+                              to="/admin/products"
+                              onClick={() => setShowManagementMenu(false)}
+                            >
+                              Products
+                            </Link>
+                          </li>
+                          <li>
+                            <Link
+                              className="dropdown-item"
+                              to="/admin/faqs"
+                              onClick={() => setShowManagementMenu(false)}
+                            >
+                              FAQs
+                            </Link>
+                          </li>
+                        </ul>
+                      )}
+                    </div>
                   </>
                 )}
 

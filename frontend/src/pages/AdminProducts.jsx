@@ -9,6 +9,25 @@ import Pagination from "../components/Pagination";
 
 const PRODUCTS_PER_PAGE = 10;
 
+// Empty string ("") means “no filter applied” for that field.
+const emptyFilters = {
+  brand: "",
+  category: "",
+  minPrice: "",
+  maxPrice: "",
+  minDiscount: "",
+  minRating: "",
+  sortBy: "",
+};
+
+// Discount calculation
+const getDiscountPercent = (product) => {
+  const mrp = Number(product?.mrp || 0);
+  const price = Number(product?.price || 0);
+  if (!mrp || mrp <= price) return 0;
+  return Math.round(((mrp - price) / mrp) * 100);
+};
+
 export default function AdminProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,6 +35,10 @@ export default function AdminProducts() {
 
   const [error, setError] = useState("");
   const [msg, setMsg] = useState("");
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState(emptyFilters);
+  const [searchText, setSearchText] = useState("");
 
   // Create form
   const [creating, setCreating] = useState(false);
@@ -39,17 +62,89 @@ export default function AdminProducts() {
     return ["General", ...Array.from(set).filter((x) => x !== "General")]; // "General" always appears first, No duplicate "General" , Convert Set -> Array
   }, [products]);
 
+  //Extract all unique brands from products and use them in filter dropdown
+  const filterBrands = useMemo(() => {
+    const set = new Set(
+      products.map((p) => (p.brand || "").trim()).filter(Boolean),
+    );
+    return ["", ...Array.from(set).sort((a, b) => a.localeCompare(b))];
+  }, [products]);
+
+  //Extract all categories from products and use them in filter dropdown
+  const filterCategories = useMemo(() => {
+    const set = new Set(
+      products.map((p) => (p.category || "").trim()).filter(Boolean),
+    );
+    return ["", ...Array.from(set).sort((a, b) => a.localeCompare(b))];
+  }, [products]);
+
+  const filteredProducts = useMemo(() => {
+    // Convert into number (or null)
+    const minPrice = filters.minPrice === "" ? null : Number(filters.minPrice);
+    const maxPrice = filters.maxPrice === "" ? null : Number(filters.maxPrice);
+    const minDiscount =
+      filters.minDiscount === "" ? null : Number(filters.minDiscount);
+    const minRating =
+      filters.minRating === "" ? null : Number(filters.minRating);
+
+    const q = searchText.trim().toLowerCase();
+
+    // For each product p, you normalize values:
+    const result = products.filter((p) => {
+      const brand = (p.brand || "").trim();
+      const category = (p.category || "").trim();
+      const price = Number(p.price || 0);
+      const rating = Number(p.rating || 0);
+      const discount = getDiscountPercent(p);
+      const title = String(p.title || "").toLowerCase();
+      const brandLower = brand.toLowerCase();
+      const categoryLower = category.toLowerCase();
+      const description = String(p.description || "").toLowerCase();
+
+      if (
+        q &&
+        !title.includes(q) &&
+        !brandLower.includes(q) &&
+        !categoryLower.includes(q) &&
+        !description.includes(q)
+      ) {
+        return false;
+      }
+
+      if (filters.brand && brand !== filters.brand) return false;
+      if (filters.category && category !== filters.category) return false;
+      if (minPrice !== null && price < minPrice) return false;
+      if (maxPrice !== null && price > maxPrice) return false;
+      if (minDiscount !== null && discount < minDiscount) return false;
+      if (minRating !== null && rating < minRating) return false;
+
+      return true;
+    });
+
+    if (filters.sortBy === "newToOld") {
+      result.sort(
+        (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0),
+      );
+    } else if (filters.sortBy === "priceLowToHigh") {
+      result.sort((a, b) => Number(a?.price || 0) - Number(b?.price || 0));
+    } else if (filters.sortBy === "priceHighToLow") {
+      result.sort((a, b) => Number(b?.price || 0) - Number(a?.price || 0));
+    }
+
+    return result;
+  }, [products, filters, searchText]);
+
   // calculates how many total pages need
   const totalPages = useMemo(
-    () => Math.max(1, Math.ceil(products.length / PRODUCTS_PER_PAGE)), //Ensures minimum 1 page,Always round UP,
-    [products.length],
+    () => Math.max(1, Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE)), //Ensures minimum 1 page,Always round UP,
+    [filteredProducts.length],
   );
 
   // It selects only the products for the current page
   const paginatedProducts = useMemo(() => {
     const start = (currentPage - 1) * PRODUCTS_PER_PAGE;
-    return products.slice(start, start + PRODUCTS_PER_PAGE);
-  }, [products, currentPage]);
+    return filteredProducts.slice(start, start + PRODUCTS_PER_PAGE);
+  }, [filteredProducts, currentPage]);
 
   const load = async () => {
     try {
@@ -75,6 +170,10 @@ export default function AdminProducts() {
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages);
   }, [currentPage, totalPages]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters, searchText]);
 
   // It uses a functional state update and computed property names to update a single field without mutating or overwriting the existing state.
   const setNewField = (k, v) => setNewP((p) => ({ ...p, [k]: v }));
@@ -201,10 +300,168 @@ export default function AdminProducts() {
     }
   };
 
+  const setFilter = (key, value) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const clearFilters = () => {
+    setFilters(emptyFilters);
+    setSearchText("");
+  };
+
   return (
     <div className="py-2">
       <h2 className="mb-1">Admin - Products</h2>
       <p className="text-secondary">Create, update and delete products.</p>
+      <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <div className="flex-grow-1" style={{ maxWidth: 460 }}>
+          <div className="input-group input-group-sm">
+            <span className="input-group-text bg-white">
+              <i className="bi bi-search" />
+            </span>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Search by title, brand, category..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="d-flex flex-wrap gap-2">
+          <button
+            type="button"
+            className="btn btn-outline-primary btn-sm"
+            onClick={() => setShowFilters((v) => !v)}
+          >
+            {showFilters ? "Hide Filters" : "Filter"}
+          </button>
+          <button
+            type="button"
+            className="btn btn-outline-secondary btn-sm"
+            onClick={clearFilters}
+          >
+            Clear Filters
+          </button>
+        </div>
+
+        <button
+          type="button"
+          className={`btn btn-sm ${showCreateForm ? "btn-outline-secondary" : "btn-primary"}`}
+          onClick={() => setShowCreateForm((v) => !v)}
+        >
+          {showCreateForm ? "Close Create Form" : "+ Add New Product"}
+        </button>
+      </div>
+
+      {showFilters && (
+        <div className="card border-0 shadow-sm mb-4">
+          <div className="card-body">
+            <div className="row g-3">
+              <div className="col-md-4">
+                <label className="form-label">Brand</label>
+                <select
+                  className="form-select"
+                  value={filters.brand}
+                  onChange={(e) => setFilter("brand", e.target.value)}
+                >
+                  {filterBrands.map((b) => (
+                    <option key={b || "all-brands"} value={b}>
+                      {b || "All Brands"}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="col-md-4">
+                <label className="form-label">Category</label>
+                <select
+                  className="form-select"
+                  value={filters.category}
+                  onChange={(e) => setFilter("category", e.target.value)}
+                >
+                  {filterCategories.map((c) => (
+                    <option key={c || "all-categories"} value={c}>
+                      {c || "All Categories"}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="col-md-2">
+                <label className="form-label">Min Price</label>
+                <input
+                  type="number"
+                  min="0"
+                  className="form-control"
+                  value={filters.minPrice}
+                  onChange={(e) => setFilter("minPrice", e.target.value)}
+                  placeholder="0"
+                />
+              </div>
+
+              <div className="col-md-2">
+                <label className="form-label">Max Price</label>
+                <input
+                  type="number"
+                  min="0"
+                  className="form-control"
+                  value={filters.maxPrice}
+                  onChange={(e) => setFilter("maxPrice", e.target.value)}
+                  placeholder="99999"
+                />
+              </div>
+
+              <div className="col-md-3">
+                <label className="form-label">Discount</label>
+                <select
+                  className="form-select"
+                  value={filters.minDiscount}
+                  onChange={(e) => setFilter("minDiscount", e.target.value)}
+                >
+                  <option value="">Any Discount</option>
+                  <option value="10">10% & above</option>
+                  <option value="20">20% & above</option>
+                  <option value="30">30% & above</option>
+                  <option value="40">40% & above</option>
+                  <option value="50">50% & above</option>
+                  <option value="60">60% & above</option>
+                </select>
+              </div>
+
+              <div className="col-md-3">
+                <label className="form-label">Rating</label>
+                <select
+                  className="form-select"
+                  value={filters.minRating}
+                  onChange={(e) => setFilter("minRating", e.target.value)}
+                >
+                  <option value="">Any Rating</option>
+                  <option value="4">4+ rating</option>
+                  <option value="3">3+ rating</option>
+                  <option value="2">2+ rating</option>
+                  <option value="1">1+ rating</option>
+                </select>
+              </div>
+
+              <div className="col-md-3">
+                <label className="form-label">Sort By</label>
+                <select
+                  className="form-select"
+                  value={filters.sortBy}
+                  onChange={(e) => setFilter("sortBy", e.target.value)}
+                >
+                  <option value="">Default</option>
+                  <option value="newToOld">New Arrivals</option>
+                  <option value="priceLowToHigh">Price: Low to High</option>
+                  <option value="priceHighToLow">Price: High to Low</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {error && (
         <div className="alert alert-danger" role="alert">
@@ -219,121 +476,134 @@ export default function AdminProducts() {
       )}
 
       {/* Create */}
-      <div className="card border-0 shadow-sm mb-4">
-        <div className="card-body p-4">
-          <h5 className="mb-3">Create Product</h5>
-
-          <form onSubmit={onCreate} className="row g-3">
-            <div className="col-md-6">
-              <Field label="Title">
-                <input
-                  className="form-control"
-                  value={newP.title}
-                  onChange={(e) => setNewField("title", e.target.value)}
-                  placeholder="Wireless Mouse"
-                />
-              </Field>
-            </div>
-
-            <div className="col-md-6">
-              <Field label="Brand">
-                <input
-                  className="form-control"
-                  value={newP.brand}
-                  onChange={(e) => setNewField("brand", e.target.value)}
-                  placeholder="ClickPro"
-                />
-              </Field>
-            </div>
-
-            <div className="col-md-6">
-              <Field label="Category">
-                <select
-                  className="form-select"
-                  value={newP.category}
-                  onChange={(e) => setNewField("category", e.target.value)}
-                >
-                  {categories.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            </div>
-
-            <div className="col-md-6">
-              <Field label="Image URL">
-                <input
-                  className="form-control"
-                  value={newP.image}
-                  onChange={(e) => setNewField("image", e.target.value)}
-                  placeholder="https://..."
-                />
-              </Field>
-            </div>
-
-            <div className="col-12">
-              <Field label="Description">
-                <textarea
-                  className="form-control"
-                  value={newP.description}
-                  onChange={(e) => setNewField("description", e.target.value)}
-                  placeholder="Short product description..."
-                  maxLength={500}
-                  rows={3}
-                />
-                <div className="small text-secondary text-end mt-1">
-                  {newP.description.length}/500
-                </div>
-              </Field>
-            </div>
-
-            <div className="col-md-4">
-              <Field label="Price">
-                <input
-                  className="form-control"
-                  value={newP.price}
-                  onChange={(e) => setNewField("price", e.target.value)}
-                  placeholder="499"
-                />
-              </Field>
-            </div>
-
-            <div className="col-md-4">
-              <Field label="MRP">
-                <input
-                  className="form-control"
-                  value={newP.mrp}
-                  onChange={(e) => setNewField("mrp", e.target.value)}
-                  placeholder="799"
-                />
-              </Field>
-            </div>
-
-            <div className="col-md-4">
-              <Field label="Stock">
-                <input
-                  className="form-control"
-                  value={newP.stock}
-                  onChange={(e) => setNewField("stock", e.target.value)}
-                  placeholder="50"
-                />
-              </Field>
-            </div>
-
-            <div className="col-12 d-grid d-sm-block mt-2">
-              <button disabled={creating} className="btn btn-primary">
-                {creating ? "Creating..." : "Create Product"}
+      {showCreateForm && (
+        <div className="card border-0 shadow-sm mb-4">
+          <div className="card-body p-4">
+            <div className="d-flex align-items-center justify-content-between mb-3">
+              <h5 className="mb-0">Create Product</h5>
+              <button
+                type="button"
+                className="btn btn-outline-secondary btn-sm"
+                onClick={() => setShowCreateForm(false)}
+              >
+                Cancel
               </button>
             </div>
-          </form>
+
+            <form onSubmit={onCreate} className="row g-3">
+              <div className="col-md-6">
+                <Field label="Title">
+                  <input
+                    className="form-control"
+                    value={newP.title}
+                    onChange={(e) => setNewField("title", e.target.value)}
+                    placeholder="Wireless Mouse"
+                  />
+                </Field>
+              </div>
+
+              <div className="col-md-6">
+                <Field label="Brand">
+                  <input
+                    className="form-control"
+                    value={newP.brand}
+                    onChange={(e) => setNewField("brand", e.target.value)}
+                    placeholder="ClickPro"
+                  />
+                </Field>
+              </div>
+
+              <div className="col-md-6">
+                <Field label="Category">
+                  <select
+                    className="form-select"
+                    value={newP.category}
+                    onChange={(e) => setNewField("category", e.target.value)}
+                  >
+                    {categories.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              </div>
+
+              <div className="col-md-6">
+                <Field label="Image URL">
+                  <input
+                    className="form-control"
+                    value={newP.image}
+                    onChange={(e) => setNewField("image", e.target.value)}
+                    placeholder="https://..."
+                  />
+                </Field>
+              </div>
+
+              <div className="col-12">
+                <Field label="Description">
+                  <textarea
+                    className="form-control"
+                    value={newP.description}
+                    onChange={(e) => setNewField("description", e.target.value)}
+                    placeholder="Short product description..."
+                    maxLength={500}
+                    rows={3}
+                  />
+                  <div className="small text-secondary text-end mt-1">
+                    {newP.description.length}/500
+                  </div>
+                </Field>
+              </div>
+
+              <div className="col-md-4">
+                <Field label="Price">
+                  <input
+                    className="form-control"
+                    value={newP.price}
+                    onChange={(e) => setNewField("price", e.target.value)}
+                    placeholder="499"
+                  />
+                </Field>
+              </div>
+
+              <div className="col-md-4">
+                <Field label="MRP">
+                  <input
+                    className="form-control"
+                    value={newP.mrp}
+                    onChange={(e) => setNewField("mrp", e.target.value)}
+                    placeholder="799"
+                  />
+                </Field>
+              </div>
+
+              <div className="col-md-4">
+                <Field label="Stock">
+                  <input
+                    className="form-control"
+                    value={newP.stock}
+                    onChange={(e) => setNewField("stock", e.target.value)}
+                    placeholder="50"
+                  />
+                </Field>
+              </div>
+
+              <div className="col-12 d-grid d-sm-block mt-2">
+                <button disabled={creating} className="btn btn-primary">
+                  {creating ? "Creating..." : "Create Product"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* List of All Products */}
       <div className="d-flex align-items-center justify-content-between mb-3">
-        <h5 className="mb-0">Products ({products.length})</h5>
+        <h5 className="mb-0">
+          Products ({filteredProducts.length}/{products.length})
+        </h5>
       </div>
 
       {loading ? (
@@ -349,6 +619,15 @@ export default function AdminProducts() {
             <h5 className="mb-2">No products available</h5>
             <p className="text-secondary mb-0">
               Create a product to get started.
+            </p>
+          </div>
+        </div>
+      ) : filteredProducts.length === 0 ? (
+        <div className="card border-0 shadow-sm">
+          <div className="card-body text-center py-5">
+            <h5 className="mb-2">No products match this search/filter</h5>
+            <p className="text-secondary mb-0">
+              Try adjusting search text or filter combination.
             </p>
           </div>
         </div>

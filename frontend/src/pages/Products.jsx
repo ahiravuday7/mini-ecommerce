@@ -48,7 +48,7 @@ export default function Products() {
     return ["", ...Array.from(set).sort((a, b) => a.localeCompare(b))];
   }, [products]);
 
-  //Extract all categories from products
+  //Extract all categories from products and use them in filter dropdown
   const categories = useMemo(() => {
     const set = new Set(
       products.map((p) => (p.category || "").trim()).filter(Boolean),
@@ -57,7 +57,6 @@ export default function Products() {
   }, [products]);
 
   const filteredProducts = useMemo(() => {
-    // Same for maxPrice, minDiscount, minRating.
     const minPrice = filters.minPrice === "" ? null : Number(filters.minPrice);
     const maxPrice = filters.maxPrice === "" ? null : Number(filters.maxPrice);
     const minDiscount =
