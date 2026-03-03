@@ -17,6 +17,7 @@ const orderRoutes = require("./routes/order.routes");
 // faq
 const faqRoutes = require("./routes/faq.routes");
 const adminFaqRoutes = require("./routes/admin.faq.routes");
+const adminDashboardRoutes = require("./routes/admin.dashboard.routes");
 
 const app = express();
 
@@ -68,6 +69,7 @@ app.use("/api/orders", orderRoutes);
 // FAQ
 app.use("/api/faqs", faqRoutes);
 app.use("/api/admin/faqs", adminFaqRoutes);
+app.use("/api/admin/dashboard", adminDashboardRoutes);
 
 // Error handling middleware (asyncHandler)
 app.use(notFound);

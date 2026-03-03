@@ -18,7 +18,7 @@ export default function UserRoute({ children }) {
   // If no user: Redirect to login page
   if (!user) return <Navigate to="/login" replace />;
   // If admin tries to access user-only page: Redirect to admin dashboard
-  if (user.isAdmin) return <Navigate to="/admin/products" replace />;
+  if (user.isAdmin) return <Navigate to="/admin" replace />;
 
   return children;
 }

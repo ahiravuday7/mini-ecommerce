@@ -15,7 +15,7 @@ export default function Navbar() {
   const isShopperView = !user || !user.isAdmin;
   const isAuthPage =
     location.pathname === "/login" || location.pathname === "/register";
-  const brandPath = user?.isAdmin ? "/admin/products" : "/";
+  const brandPath = user?.isAdmin ? "/admin" : "/";
 
   const onLogout = async () => {
     await logout();
@@ -33,9 +33,7 @@ export default function Navbar() {
             MiniStore
           </Link>
 
-          {isShopperView && !isAuthPage && (
-            <ProductSearchBar />
-          )}
+          {isShopperView && !isAuthPage && <ProductSearchBar />}
 
           <nav className="nav gap-3 flex-grow-1">
             {isShopperView && (
@@ -67,16 +65,22 @@ export default function Navbar() {
                 {user.isAdmin && (
                   <>
                     <Link
+                      to="/admin/dashboard"
+                      className="btn btn-outline-primary btn-sm"
+                    >
+                      Dashboard
+                    </Link>
+                    <Link
                       to="/admin/products"
                       className="btn btn-outline-primary btn-sm"
                     >
-                      Product Dashboard
+                      Products
                     </Link>
                     <Link
                       to="/admin/faqs"
                       className="btn btn-outline-primary btn-sm"
                     >
-                      FAQs Dashboard
+                      FAQs
                     </Link>
                   </>
                 )}

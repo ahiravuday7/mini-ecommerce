@@ -14,13 +14,13 @@ export default function ShopperRoute({ children, guestOnly = false }) {
   }
 
   if (guestOnly) {
-    if (user?.isAdmin) return <Navigate to="/admin/products" replace />;
+    if (user?.isAdmin) return <Navigate to="/admin" replace />;
     if (user) return <Navigate to="/" replace />;
     return children;
   }
 
   // guest or normal user can access; only admin is blocked
-  if (user?.isAdmin) return <Navigate to="/admin/products" replace />;
+  if (user?.isAdmin) return <Navigate to="/admin" replace />;
 
   return children;
 }
