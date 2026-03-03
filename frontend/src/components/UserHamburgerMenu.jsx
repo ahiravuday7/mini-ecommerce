@@ -14,6 +14,7 @@ export default function UserHamburgerMenu() {
   const trendingItems = [
     { label: "Bestsellers", to: "/products?sort=bestsellers" },
     { label: "New Releases", to: "/products?sort=new-releases" },
+    { label: "Products", to: "/products" },
   ];
 
   // Converting categories into menu items & where to navigate on click

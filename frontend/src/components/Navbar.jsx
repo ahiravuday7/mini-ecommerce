@@ -2,6 +2,7 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import UserHamburgerMenu from "./UserHamburgerMenu";
 import AdminHamburgerMenu from "./AdminHamburgerMenu";
+import ProductSearchBar from "./ProductSearchBar";
 
 const linkClass = ({ isActive }) =>
   `nav-link px-0 px-lg-2 ${isActive ? "fw-bold text-primary" : "text-secondary"}`;
@@ -32,19 +33,16 @@ export default function Navbar() {
             MiniStore
           </Link>
 
+          {isShopperView && !isAuthPage && (
+            <ProductSearchBar />
+          )}
+
           <nav className="nav gap-3 flex-grow-1">
             {isShopperView && (
               <>
                 <NavLink to="/" className={linkClass}>
                   Home
                 </NavLink>
-                {!isAuthPage && (
-                  <>
-                    <NavLink to="/products" className={linkClass}>
-                      Products
-                    </NavLink>
-                  </>
-                )}
                 {isUserOnly && (
                   <>
                     <NavLink to="/cart" className={linkClass}>

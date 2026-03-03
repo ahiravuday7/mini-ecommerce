@@ -6,116 +6,291 @@ import Pagination from "../components/Pagination";
 
 const PRODUCTS_PER_PAGE = 6;
 
+// Empty string ("") means “no filter applied” for that field.
+const emptyFilters = {
+  brand: "",
+  category: "",
+  minPrice: "",
+  maxPrice: "",
+  minDiscount: "",
+  minRating: "",
+  sortBy: "",
+};
+
+// Discount calculation
+const getDiscountPercent = (product) => {
+  const mrp = Number(product?.mrp || 0);
+  const price = Number(product?.price || 0);
+  if (!mrp || mrp <= price) return 0;
+  return Math.round(((mrp - price) / mrp) * 100);
+};
+
 export default function Products() {
-  //read query params from URL
   const [searchParams] = useSearchParams();
-  // reads value from URL
+  const qFromUrl = (searchParams.get("q") || "").trim(); //reads query parameters from URL
   const categoryFromUrl = (searchParams.get("category") || "").trim();
 
-  const [products, setProducts] = useState([]); // list of products from backend
-  const [loading, setLoading] = useState(true); //show loader while fetching
-  const [error, setError] = useState(""); // show error message if API fails
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({
+    ...emptyFilters,
+    category: categoryFromUrl,
+  });
 
-  const [q, setQ] = useState(""); // search query (user types)
-  const [category, setCategory] = useState(categoryFromUrl); // If URL has category -> dropdown auto-selected & Initialize state using URL ,If no URL -> empty (All Categories)
-  const [currentPage, setCurrentPage] = useState(1); // When page loads -> starts from page 1
+  // Extract all unique brands from products and use them in filter dropdown
+  const brands = useMemo(() => {
+    const set = new Set(
+      products.map((p) => (p.brand || "").trim()).filter(Boolean),
+    );
+    return ["", ...Array.from(set).sort((a, b) => a.localeCompare(b))];
+  }, [products]);
 
-  // categories from current products list
-  // With useMemo, it recalculates only when products changes.
+  //Extract all categories from products
   const categories = useMemo(() => {
-    const set = new Set(products.map((p) => p.category).filter(Boolean));
+    const set = new Set(
+      products.map((p) => (p.category || "").trim()).filter(Boolean),
+    );
     return ["", ...Array.from(set)];
   }, [products]);
 
-  // calculates how many total pages need
+  const filteredProducts = useMemo(() => {
+    // Same for maxPrice, minDiscount, minRating.
+    const minPrice = filters.minPrice === "" ? null : Number(filters.minPrice);
+    const maxPrice = filters.maxPrice === "" ? null : Number(filters.maxPrice);
+    const minDiscount =
+      filters.minDiscount === "" ? null : Number(filters.minDiscount);
+    const minRating =
+      filters.minRating === "" ? null : Number(filters.minRating);
+
+    // For each product p, you normalize values:
+    const result = products.filter((p) => {
+      const brand = (p.brand || "").trim();
+      const category = (p.category || "").trim();
+      const price = Number(p.price || 0);
+      const rating = Number(p.rating || 0);
+      const discount = getDiscountPercent(p);
+
+      if (filters.brand && brand !== filters.brand) return false; //Brand filter
+      if (filters.category && category !== filters.category) return false; //Category filter
+      if (minPrice !== null && price < minPrice) return false; //Min price
+      if (maxPrice !== null && price > maxPrice) return false; //Max price
+      if (minDiscount !== null && discount < minDiscount) return false; //Min discount
+      if (minRating !== null && rating < minRating) return false; //Min rating
+
+      return true;
+    });
+
+    // Sorting happens after filtering
+    if (filters.sortBy === "newToOld") {
+      result.sort(
+        (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0),
+      );
+    } else if (filters.sortBy === "priceLowToHigh") {
+      result.sort((a, b) => Number(a?.price || 0) - Number(b?.price || 0));
+    } else if (filters.sortBy === "priceHighToLow") {
+      result.sort((a, b) => Number(b?.price || 0) - Number(a?.price || 0));
+    }
+
+    return result;
+  }, [products, filters]);
+
+  // Total pages depends on filtered count:
   const totalPages = useMemo(
-    () => Math.max(1, Math.ceil(products.length / PRODUCTS_PER_PAGE)), //Ensures minimum 1 page,Always round UP,
-    [products.length],
+    () => Math.max(1, Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE)),
+    [filteredProducts.length],
   );
 
-  // It selects only the products for the current page
+  //Current page items:
   const currentProducts = useMemo(() => {
     const start = (currentPage - 1) * PRODUCTS_PER_PAGE;
-    return products.slice(start, start + PRODUCTS_PER_PAGE);
-  }, [products, currentPage]);
+    return filteredProducts.slice(start, start + PRODUCTS_PER_PAGE);
+  }, [filteredProducts, currentPage]);
 
   const load = async (params = {}) => {
     try {
-      setLoading(true); // Start loading
-      setError(""); // Clear old error
-      const { data } = await fetchProducts(params); // Call API
-      setProducts(data); // Store products in state
+      setLoading(true);
+      setError("");
+      const { data } = await fetchProducts(params);
+      setProducts(data);
     } catch (e) {
       setError(e?.response?.data?.message || "Failed to load products");
     } finally {
-      setLoading(false); //always stop loading (success or fail)
+      setLoading(false);
     }
   };
 
-  // Sync state when URL changes,clicks a category somewhere else (Home page),gets redirected to:/products?category=Fashion
+  // Whenever category in URL changes -> update filter state
   useEffect(() => {
-    setCategory(categoryFromUrl);
+    setFilters((prev) => ({ ...prev, category: categoryFromUrl }));
   }, [categoryFromUrl]);
 
-  // reset to first page when filters change
+  //So when user applies filters, they go back to page 1 automatically
   useEffect(() => {
     setCurrentPage(1);
-  }, [q, category]);
+  }, [qFromUrl, filters]);
 
-  // keep page in valid range if results become fewer(current page never exceeds total pages)
+  // When filters change -> number of products changes - total pages change
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages);
   }, [currentPage, totalPages]);
 
-  // Apply filters with small debounce
   useEffect(() => {
     const timer = setTimeout(() => {
       const params = {};
-      if (q.trim()) params.q = q.trim(); // trim() removes whitespace from start/end
-      if (category) params.category = category;
+      if (qFromUrl) params.q = qFromUrl;
       load(params);
-    }, 300); // wait 300ms then call backend with params (after you stop typing)
+    }, 300);
 
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q, category]);
+  }, [qFromUrl]);
+
+  const setFilter = (key, value) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const clearFilters = () => {
+    setFilters(emptyFilters);
+  };
 
   return (
     <div className="py-2">
       <div className="mb-4">
         <h2 className="mb-1">Products</h2>
         <p className="text-secondary mb-0">
-          Search and filter products (powered by backend API)
+          Browse products with advanced filters.
         </p>
       </div>
 
       {/* Filters */}
-      <div className="row g-3 mb-4">
-        {/* Search */}
-        <div className="col-md-8">
-          <input
-            className="form-control"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search products (e.g. shoes, band, bottle...)"
-          />
-        </div>
-
-        {/* Category filter */}
-        <div className="col-md-4">
-          <select
-            className="form-select"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-          >
-            {categories.map((c) => (
-              <option key={c || "all"} value={c}>
-                {c ? c : "All Categories"}
-              </option>
-            ))}
-          </select>
-        </div>
+      <div className="d-flex flex-wrap gap-2 mb-3">
+        <button
+          type="button"
+          className="btn btn-outline-primary btn-sm"
+          onClick={() => setShowFilters((v) => !v)}
+        >
+          {showFilters ? "Hide Filters" : "Filter"}
+        </button>
+        <button
+          type="button"
+          className="btn btn-outline-secondary btn-sm"
+          onClick={clearFilters}
+        >
+          Clear Filters
+        </button>
       </div>
+
+      {showFilters && (
+        <div className="card border-0 shadow-sm mb-4">
+          <div className="card-body">
+            <div className="row g-3">
+              <div className="col-md-4">
+                <label className="form-label">Brand</label>
+                <select
+                  className="form-select"
+                  value={filters.brand}
+                  onChange={(e) => setFilter("brand", e.target.value)}
+                >
+                  {brands.map((b) => (
+                    <option key={b || "all-brands"} value={b}>
+                      {b || "All Brands"}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Category filter */}
+              <div className="col-md-4">
+                <label className="form-label">Category</label>
+                <select
+                  className="form-select"
+                  value={filters.category}
+                  onChange={(e) => setFilter("category", e.target.value)}
+                >
+                  {categories.map((c) => (
+                    <option key={c || "all-categories"} value={c}>
+                      {c || "All Categories"}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="col-md-2">
+                <label className="form-label">Min Price</label>
+                <input
+                  type="number"
+                  min="0"
+                  className="form-control"
+                  value={filters.minPrice}
+                  onChange={(e) => setFilter("minPrice", e.target.value)}
+                  placeholder="0"
+                />
+              </div>
+
+              <div className="col-md-2">
+                <label className="form-label">Max Price</label>
+                <input
+                  type="number"
+                  min="0"
+                  className="form-control"
+                  value={filters.maxPrice}
+                  onChange={(e) => setFilter("maxPrice", e.target.value)}
+                  placeholder="99999"
+                />
+              </div>
+
+              <div className="col-md-3">
+                <label className="form-label">Discount</label>
+                <select
+                  className="form-select"
+                  value={filters.minDiscount}
+                  onChange={(e) => setFilter("minDiscount", e.target.value)}
+                >
+                  <option value="">Any Discount</option>
+                  <option value="10">10% & above</option>
+                  <option value="20">20% & above</option>
+                  <option value="30">30% & above</option>
+                  <option value="40">40% & above</option>
+                  <option value="50">50% & above</option>
+                  <option value="60">60% & above</option>
+                </select>
+              </div>
+
+              <div className="col-md-3">
+                <label className="form-label">Rating</label>
+                <select
+                  className="form-select"
+                  value={filters.minRating}
+                  onChange={(e) => setFilter("minRating", e.target.value)}
+                >
+                  <option value="">Any Rating</option>
+                  <option value="4">4+ rating</option>
+                  <option value="3">3+ rating</option>
+                  <option value="2">2+ rating</option>
+                  <option value="1">1+ rating</option>
+                </select>
+              </div>
+
+              <div className="col-md-3">
+                <label className="form-label">Sort By</label>
+                <select
+                  className="form-select"
+                  value={filters.sortBy}
+                  onChange={(e) => setFilter("sortBy", e.target.value)}
+                >
+                  <option value="">Default</option>
+                  <option value="newToOld">New Arrivals</option>
+                  <option value="priceLowToHigh">Price: Low to High</option>
+                  <option value="priceHighToLow">Price: High to Low</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* States loading, error, empty */}
       {loading && (
@@ -133,19 +308,19 @@ export default function Products() {
         </div>
       )}
 
-      {!loading && !error && products.length === 0 && (
+      {!loading && !error && filteredProducts.length === 0 && (
         <div className="card border-0 shadow-sm">
           <div className="card-body text-center py-5">
             <h5 className="mb-2">No products found</h5>
             <p className="text-secondary mb-0">
-              Try a different search or category filter.
+              Try changing your filter combination.
             </p>
           </div>
         </div>
       )}
 
       {/* Grid of products */}
-      {!loading && !error && products.length > 0 && (
+      {!loading && !error && filteredProducts.length > 0 && (
         <>
           <div className="row g-4">
             {currentProducts.map((p) => (
