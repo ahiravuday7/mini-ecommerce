@@ -109,6 +109,15 @@ export default function Products() {
     return filteredProducts.slice(start, start + PRODUCTS_PER_PAGE);
   }, [filteredProducts, currentPage]);
 
+  const resultStart =
+    filteredProducts.length === 0 //If no data exists -> return 0, Otherwise -> calculate values
+      ? 0
+      : (currentPage - 1) * PRODUCTS_PER_PAGE + 1;
+  const resultEnd =
+    filteredProducts.length === 0
+      ? 0
+      : resultStart + currentProducts.length - 1;
+
   const load = async (params = {}) => {
     try {
       setLoading(true);
@@ -162,6 +171,11 @@ export default function Products() {
         <h2 className="mb-1">Products</h2>
         <p className="text-secondary mb-0">
           Browse products with advanced filters.
+        </p>
+        <p className="small text-secondary mb-0 mt-1">
+          {`${resultStart}-${resultEnd} of ${filteredProducts.length.toLocaleString()} results${
+            qFromUrl ? ` for "${qFromUrl}"` : ""
+          }`}
         </p>
       </div>
 
