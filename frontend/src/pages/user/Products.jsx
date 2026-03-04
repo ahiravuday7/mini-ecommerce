@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { fetchProducts } from "../api/products.api";
-import ProductCard from "../components/ProductCard";
-import Pagination from "../components/Pagination";
+import { fetchProducts } from "../../api/products.api";
+import ProductCard from "../../components/ProductCard";
+import Pagination from "../../components/Pagination";
 
 const PRODUCTS_PER_PAGE = 6;
 

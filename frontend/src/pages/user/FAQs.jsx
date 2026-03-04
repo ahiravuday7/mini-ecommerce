@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { fetchFaqs } from "../api/faqs.api";
+import { fetchFaqs } from "../../api/faqs.api";
 
 // Language options list
 const LANGUAGE_OPTIONS = [

@@ -1,8 +1,8 @@
 import { Routes, Route } from "react-router-dom";
 import AppLayout from "./layouts/AppLayout";
 
-import Home from "./pages/Home";
-import ProductDetails from "./pages/ProductDetails";
+import Home from "./pages/user/Home";
+import ProductDetails from "./pages/user/ProductDetails";
 import Cart from "./pages/user/Cart";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -15,9 +15,9 @@ import About from "./pages/About";
 import Careers from "./pages/Careers";
 import Contact from "./pages/Contact";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
-import FAQs from "./pages/FAQs";
+import FAQs from "./pages/user/FAQs";
 import AdminFaqs from "./pages/admin/AdminFaqs";
-import Products from "./pages/Products";
+import Products from "./pages/user/Products";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 
 import AdminRoute from "./components/admin/AdminRoute";

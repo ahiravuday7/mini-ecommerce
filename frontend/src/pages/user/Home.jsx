@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import Carousel from "../components/Carousel";
-import { useCategories } from "../context/CategoriesContext";
+import Carousel from "../../components/Carousel";
+import { useCategories } from "../../context/CategoriesContext";
 import "./home.css";
 
 // select manual image for selected categories

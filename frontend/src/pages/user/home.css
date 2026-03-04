@@ -1,5 +1,5 @@
 .home-scrollbar-hide {
-  -ms-overflow-style: none; /* IE and old Edge */
+  -ms-overflow-style: none; /* IE and legacy Edge */
   scrollbar-width: none; /* Firefox */
 }
 
