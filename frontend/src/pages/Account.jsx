@@ -9,8 +9,9 @@ import { useAuth } from "../context/AuthContext";
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const PHONE_REGEX = /^[6-9]\d{9}$/;
+const PASSWORD_REGEX =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
-// Default shipping address structure
 const emptyAddress = {
   fullName: "",
   phone: "",
@@ -23,46 +24,77 @@ const emptyAddress = {
   country: "India",
 };
 
-// If backend has partial address (missing fields), this fills missing ones from emptyAddress.
 const withAddressDefaults = (address) => ({
   ...emptyAddress,
   ...(address || {}),
+});
+
+const normalizePhone = (value) =>
+  String(value || "")
+    .replace(/\D/g, "")
+    .slice(0, 10);
+
+const normalizeAddressForCompare = (address) => ({
+  fullName: String(address?.fullName || "").trim(),
+  phone: normalizePhone(address?.phone || ""),
+  addressLine1: String(address?.addressLine1 || "").trim(),
+  addressLine2: String(address?.addressLine2 || "").trim(),
+  landmark: String(address?.landmark || "").trim(),
+  city: String(address?.city || "").trim(),
+  state: String(address?.state || "").trim(),
+  pincode: String(address?.pincode || "").replace(/\D/g, "").slice(0, 6),
+  country: String(address?.country || "India").trim() || "India",
 });
 
 export default function Account() {
   const navigate = useNavigate();
   const { user, booting, updateUser } = useAuth();
 
-  // Profile & Address form values
   const [profile, setProfile] = useState({ name: "", email: "", phone: "" });
-  const [emailLocked, setEmailLocked] = useState(false); //Can user edit email?
+  const [originalProfile, setOriginalProfile] = useState({
+    name: "",
+    email: "",
+    phone: "",
+  });
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [address, setAddress] = useState(emptyAddress);
+  const [originalAddress, setOriginalAddress] = useState(
+    normalizeAddressForCompare(emptyAddress),
+  );
 
-  // Loading / saving flags
   const [loading, setLoading] = useState(true);
   const [profileSaving, setProfileSaving] = useState(false);
   const [addressSaving, setAddressSaving] = useState(false);
 
-  //Errors/success messages
   const [loadError, setLoadError] = useState("");
   const [profileError, setProfileError] = useState("");
   const [profileSuccess, setProfileSuccess] = useState("");
   const [addressError, setAddressError] = useState("");
   const [addressSuccess, setAddressSuccess] = useState("");
 
-  // get user data from:AuthContext user,OR from getMyAccount(),OR after profile/address update API,call syncFromUser() to update UI form fields.So forms always display latest data.
   const syncFromUser = (accountUser) => {
+    const name = (accountUser?.name || "").trim();
+    const email = (accountUser?.email || "").trim().toLowerCase();
+    const phone = normalizePhone(accountUser?.phone || "");
+
     setProfile({
-      name: accountUser?.name || "",
-      email: accountUser?.email || "",
-      phone: accountUser?.phone || "",
+      name,
+      email,
+      phone,
     });
-    // If user already has email -> lock input,If user doesn’t have email -> allow input
-    setEmailLocked(Boolean(accountUser?.email));
-    setAddress(withAddressDefaults(accountUser?.shippingAddress));
+    setOriginalProfile({ name, email, phone });
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmNewPassword("");
+    const normalizedAddress = normalizeAddressForCompare(
+      withAddressDefaults(accountUser?.shippingAddress),
+    );
+    setAddress(normalizedAddress);
+    setOriginalAddress(normalizedAddress);
   };
 
-  //fetch latest user data from backend
   const loadAccount = async () => {
     try {
       setLoading(true);
@@ -77,29 +109,54 @@ export default function Account() {
     }
   };
 
-  // Redirect if not logged in
   useEffect(() => {
     if (!booting && !user) navigate("/login");
   }, [booting, user, navigate]);
 
-  //Fill form immediately from AuthContext user, This gives fast UI: you don’t wait for API call.
   useEffect(() => {
     if (!booting && user) syncFromUser(user);
   }, [booting, user]);
 
-  // Fetch fresh data from backend when user id exists
   useEffect(() => {
     if (!booting && user?._id) loadAccount();
   }, [booting, user?._id]);
 
-  //Profile submit handler
+  const normalizedName = profile.name.trim();
+  const normalizedEmail = profile.email.trim().toLowerCase();
+  const normalizedPhone = normalizePhone(profile.phone);
+  const passwordChangeRequested =
+    newPassword.trim().length > 0 || confirmNewPassword.trim().length > 0;
+  const isNameChanged = normalizedName !== originalProfile.name;
+  const isEmailChanged = normalizedEmail !== originalProfile.email;
+  const isPhoneChanged = normalizedPhone !== originalProfile.phone;
+  const hasProfileChanges =
+    isNameChanged || isEmailChanged || isPhoneChanged || passwordChangeRequested;
+  const hasAddressChanges =
+    JSON.stringify(normalizeAddressForCompare(address)) !==
+    JSON.stringify(originalAddress);
+
   const onProfileSubmit = async (e) => {
     e.preventDefault();
 
-    // Validation
     const trimmedName = profile.name.trim();
-    const trimmedPhone = profile.phone.trim();
+    const trimmedPhone = normalizePhone(profile.phone);
     const trimmedEmail = profile.email.trim().toLowerCase();
+    const passwordForReAuth = currentPassword.trim();
+    const trimmedNewPassword = newPassword.trim();
+    const trimmedConfirmNewPassword = confirmNewPassword.trim();
+
+    const nameChanged = trimmedName !== originalProfile.name;
+    const emailChanged = trimmedEmail !== originalProfile.email;
+    const phoneChanged = trimmedPhone !== originalProfile.phone;
+    const passwordUpdateRequested =
+      trimmedNewPassword.length > 0 || trimmedConfirmNewPassword.length > 0;
+    const changed =
+      nameChanged || emailChanged || phoneChanged || passwordUpdateRequested;
+
+    if (!changed) {
+      setProfileError("No changes to save");
+      return;
+    }
 
     if (!trimmedName) {
       setProfileError("Name is required");
@@ -110,9 +167,31 @@ export default function Account() {
       setProfileError("Phone must be a valid Indian mobile number");
       return;
     }
-    //Validation only runs when:email is editable (!emailLocked),AND user entered something
-    if (!emailLocked && trimmedEmail && !EMAIL_REGEX.test(trimmedEmail)) {
+
+    if (trimmedEmail && !EMAIL_REGEX.test(trimmedEmail)) {
       setProfileError("Please enter a valid email address");
+      return;
+    }
+
+    if (passwordUpdateRequested) {
+      if (!trimmedNewPassword || !trimmedConfirmNewPassword) {
+        setProfileError("New password and confirm new password are required");
+        return;
+      }
+      if (trimmedNewPassword !== trimmedConfirmNewPassword) {
+        setProfileError("New password and confirm new password do not match");
+        return;
+      }
+      if (!PASSWORD_REGEX.test(trimmedNewPassword)) {
+        setProfileError(
+          "Password must be at least 8 characters and include uppercase, lowercase, number, and special character",
+        );
+        return;
+      }
+    }
+
+    if (!passwordForReAuth) {
+      setProfileError("Current password is required to save changes");
       return;
     }
 
@@ -121,18 +200,22 @@ export default function Account() {
       setProfileError("");
       setProfileSuccess("");
 
-      // API call
       const payload = {
         name: trimmedName,
         phone: trimmedPhone,
-        // email locked- emailLocked = true,email not locked- emailLocked = false
-        ...(!emailLocked && trimmedEmail ? { email: trimmedEmail } : {}),
+        email: trimmedEmail,
+        currentPassword: passwordForReAuth,
       };
+
+      if (passwordUpdateRequested) {
+        payload.newPassword = trimmedNewPassword;
+        payload.confirmNewPassword = trimmedConfirmNewPassword;
+      }
 
       const { data } = await updateMyProfile(payload);
       const updatedUser = data?.user || data;
-      syncFromUser(updatedUser); //update local form state via syncFromUser
-      updateUser(updatedUser); //update global auth user via updateUser
+      syncFromUser(updatedUser);
+      updateUser(updatedUser);
       setProfileSuccess("Profile updated successfully");
     } catch (e) {
       setProfileError(e?.response?.data?.message || "Failed to update profile");
@@ -141,13 +224,17 @@ export default function Account() {
     }
   };
 
-  // Address submit handler
   const onAddressSubmit = async (e) => {
     e.preventDefault();
 
-    // Validation;
-    const trimmedPhone = address.phone.trim();
-    const trimmedPincode = address.pincode.trim();
+    if (!hasAddressChanges) {
+      setAddressError("No changes to save");
+      return;
+    }
+
+    const normalizedAddress = normalizeAddressForCompare(address);
+    const trimmedPhone = normalizedAddress.phone;
+    const trimmedPincode = normalizedAddress.pincode;
 
     if (trimmedPhone && !PHONE_REGEX.test(trimmedPhone)) {
       setAddressError("Shipping phone must be a valid Indian mobile number");
@@ -163,18 +250,17 @@ export default function Account() {
       setAddressError("");
       setAddressSuccess("");
 
-      // Payload shape
       const payload = {
         shippingAddress: {
-          fullName: address.fullName.trim(),
+          fullName: normalizedAddress.fullName,
           phone: trimmedPhone,
-          addressLine1: address.addressLine1.trim(),
-          addressLine2: address.addressLine2.trim(),
-          landmark: address.landmark.trim(),
-          city: address.city.trim(),
-          state: address.state.trim(),
+          addressLine1: normalizedAddress.addressLine1,
+          addressLine2: normalizedAddress.addressLine2,
+          landmark: normalizedAddress.landmark,
+          city: normalizedAddress.city,
+          state: normalizedAddress.state,
           pincode: trimmedPincode,
-          country: address.country.trim() || "India",
+          country: normalizedAddress.country,
         },
       };
 
@@ -192,7 +278,6 @@ export default function Account() {
     }
   };
 
-  // Loading UI
   if (booting || loading) {
     return (
       <div className="card border-0 shadow-sm">
@@ -233,7 +318,7 @@ export default function Account() {
               {profileSuccess && (
                 <div className="alert alert-success">{profileSuccess}</div>
               )}
-              <form onSubmit={onProfileSubmit}>
+              <form onSubmit={onProfileSubmit} noValidate>
                 <div className="mb-3">
                   <label className="form-label">Name</label>
                   <input
@@ -252,18 +337,11 @@ export default function Account() {
                     type="email"
                     className="form-control"
                     value={profile.email}
-                    disabled={emailLocked}
                     onChange={(e) =>
                       setProfile((p) => ({ ...p, email: e.target.value }))
                     }
-                    placeholder={emailLocked ? "" : "your@email.com"}
+                    placeholder="your@email.com"
                   />
-                  <small className="text-secondary">
-                    {/* Before adding → “you can add once”,After adding → “you can’t change” */}
-                    {emailLocked
-                      ? "Email change requires verification."
-                      : "You can add email once. After saving, it becomes read-only."}
-                  </small>
                 </div>
 
                 <div className="mb-3">
@@ -271,21 +349,71 @@ export default function Account() {
                   <input
                     className="form-control"
                     value={profile.phone}
+                    type="tel"
+                    autoComplete="tel"
                     inputMode="numeric"
-                    pattern="^[6-9]\\d{9}$"
+                    maxLength={10}
                     onChange={(e) =>
-                      setProfile((p) => ({ ...p, phone: e.target.value }))
+                      setProfile((p) => ({
+                        ...p,
+                        phone: normalizePhone(e.target.value),
+                      }))
                     }
                     placeholder="10-digit mobile"
                   />
                 </div>
 
+                <hr className="my-4" />
+                <h6 className="mb-3">Change Password</h6>
+
+                <div className="mb-3">
+                  <label className="form-label">New Password</label>
+                  <input
+                    type="password"
+                    className="form-control"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Leave blank if not changing"
+                    autoComplete="new-password"
+                  />
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label">Confirm New Password</label>
+                  <input
+                    type="password"
+                    className="form-control"
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                    placeholder="Re-enter new password"
+                    autoComplete="new-password"
+                  />
+                </div>
+
+                {hasProfileChanges && (
+                  <div className="border rounded p-3 bg-light mb-3">
+                    <h6 className="mb-2">Security Check</h6>
+                    <label className="form-label">Current Password</label>
+                    <input
+                      type="password"
+                      className="form-control"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      placeholder="Enter your current password"
+                      autoComplete="current-password"
+                    />
+                    <small className="text-secondary">
+                      Required to save any profile or password change.
+                    </small>
+                  </div>
+                )}
+
                 <button
                   type="submit"
-                  disabled={profileSaving}
+                  disabled={profileSaving || !hasProfileChanges}
                   className="btn btn-primary"
                 >
-                  {profileSaving ? "Saving..." : "Update Profile"}
+                  {profileSaving ? "Saving..." : "Save Changes"}
                 </button>
               </form>
             </div>
@@ -302,7 +430,7 @@ export default function Account() {
               {addressSuccess && (
                 <div className="alert alert-success">{addressSuccess}</div>
               )}
-              <form onSubmit={onAddressSubmit}>
+              <form onSubmit={onAddressSubmit} noValidate>
                 <div className="row g-3">
                   <div className="col-12">
                     <label className="form-label">Full Name</label>
@@ -320,10 +448,15 @@ export default function Account() {
                     <input
                       className="form-control"
                       value={address.phone}
+                      type="tel"
+                      autoComplete="tel"
                       inputMode="numeric"
-                      pattern="^[6-9]\\d{9}$"
+                      maxLength={10}
                       onChange={(e) =>
-                        setAddress((a) => ({ ...a, phone: e.target.value }))
+                        setAddress((a) => ({
+                          ...a,
+                          phone: normalizePhone(e.target.value),
+                        }))
                       }
                       placeholder="10-digit mobile"
                     />
@@ -395,10 +528,14 @@ export default function Account() {
                     <input
                       className="form-control"
                       value={address.pincode}
+                      type="tel"
                       inputMode="numeric"
-                      pattern="^[0-9]{6}$"
+                      maxLength={6}
                       onChange={(e) =>
-                        setAddress((a) => ({ ...a, pincode: e.target.value }))
+                        setAddress((a) => ({
+                          ...a,
+                          pincode: e.target.value.replace(/\D/g, "").slice(0, 6),
+                        }))
                       }
                       placeholder="6-digit pincode"
                     />
@@ -418,7 +555,7 @@ export default function Account() {
 
                 <button
                   type="submit"
-                  disabled={addressSaving}
+                  disabled={addressSaving || !hasAddressChanges}
                   className="btn btn-primary mt-3"
                 >
                   {addressSaving ? "Saving..." : "Update Address"}

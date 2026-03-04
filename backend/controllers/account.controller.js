@@ -3,6 +3,8 @@ const asyncHandler = require("../utils/asyncHandler");
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const PHONE_REGEX = /^[6-9]\d{9}$/;
+const PASSWORD_REGEX =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
 // Checks if value is a string,If yes -> removes spaces from start and end,If not -> returns the value unchanged
 const trimIfString = (value) =>
@@ -39,7 +41,7 @@ const getMyAccount = asyncHandler(async (req, res) => {
 });
 
 // PUT /api/account/profile
-// body: { name?, email?, phone? }
+// body: { name?, email?, phone?, currentPassword?, newPassword?, confirmNewPassword? }
 const updateMyProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
 
@@ -49,7 +51,13 @@ const updateMyProfile = asyncHandler(async (req, res) => {
   }
 
   // Checks if at least one field is present in request
-  const hasUpdateField = ["name", "email", "phone"].some(
+  const hasUpdateField = [
+    "name",
+    "email",
+    "phone",
+    "newPassword",
+    "confirmNewPassword",
+  ].some(
     (field) => req.body[field] !== undefined,
   );
 
@@ -57,6 +65,64 @@ const updateMyProfile = asyncHandler(async (req, res) => {
   if (!hasUpdateField) {
     res.status(400);
     throw new Error("At least one profile field is required");
+  }
+
+  const incomingName =
+    req.body.name !== undefined ? trimIfString(req.body.name) : undefined;
+  const incomingEmail =
+    req.body.email !== undefined ? normalizeEmail(req.body.email) : undefined;
+  const incomingPhone =
+    req.body.phone !== undefined ? trimIfString(req.body.phone) : undefined;
+  const incomingNewPassword =
+    req.body.newPassword !== undefined ? trimIfString(req.body.newPassword) : undefined;
+  const incomingConfirmNewPassword =
+    req.body.confirmNewPassword !== undefined
+      ? trimIfString(req.body.confirmNewPassword)
+      : undefined;
+  const passwordChangeRequested =
+    req.body.newPassword !== undefined || req.body.confirmNewPassword !== undefined;
+
+  const currentName = trimIfString(user.name || "");
+  const currentEmail = normalizeEmail(user.email || "");
+  const currentPhone = trimIfString(user.phone || "");
+
+  const nameWillChange =
+    req.body.name !== undefined && (incomingName || "") !== currentName;
+  const emailWillChange =
+    req.body.email !== undefined && (incomingEmail || "") !== currentEmail;
+  const phoneWillChange =
+    req.body.phone !== undefined && (incomingPhone || "") !== currentPhone;
+
+  if (passwordChangeRequested) {
+    if (!incomingNewPassword || !incomingConfirmNewPassword) {
+      res.status(400);
+      throw new Error("New password and confirm new password are required");
+    }
+    if (incomingNewPassword !== incomingConfirmNewPassword) {
+      res.status(400);
+      throw new Error("New password and confirm new password do not match");
+    }
+    if (!PASSWORD_REGEX.test(incomingNewPassword)) {
+      res.status(400);
+      throw new Error(
+        "Password must be at least 8 characters and include uppercase, lowercase, number, and special character",
+      );
+    }
+  }
+
+  // Sensitive updates require re-authentication
+  if (nameWillChange || emailWillChange || phoneWillChange || passwordChangeRequested) {
+    const currentPassword = trimIfString(req.body.currentPassword);
+    if (!currentPassword) {
+      res.status(400);
+      throw new Error("Current password is required to save changes");
+    }
+
+    const isValidPassword = await user.matchPassword(currentPassword);
+    if (!isValidPassword) {
+      res.status(401);
+      throw new Error("Current password is incorrect");
+    }
   }
 
   // Update name , Validate name
@@ -71,7 +137,7 @@ const updateMyProfile = asyncHandler(async (req, res) => {
 
   // Update email
   if (req.body.email !== undefined) {
-    const email = normalizeEmail(req.body.email); //Trims + converts to lowercase
+    const email = incomingEmail; //Trims + converts to lowercase
 
     // Case 1: Empty email
     if (!email) {
@@ -99,7 +165,7 @@ const updateMyProfile = asyncHandler(async (req, res) => {
 
   // Update phone
   if (req.body.phone !== undefined) {
-    const phone = trimIfString(req.body.phone);
+    const phone = incomingPhone;
 
     // Case 1: Empty phone
     if (!phone) {
@@ -129,6 +195,10 @@ const updateMyProfile = asyncHandler(async (req, res) => {
   if (!user.email && !user.phone) {
     res.status(400);
     throw new Error("At least one of email or phone is required");
+  }
+
+  if (passwordChangeRequested) {
+    user.password = incomingNewPassword;
   }
 
   // Save to database
