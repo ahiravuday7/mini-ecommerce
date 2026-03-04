@@ -234,7 +234,6 @@ const updateMyShippingAddress = asyncHandler(async (req, res) => {
     "city",
     "state",
     "pincode",
-    "country",
   ];
 
   // Validate: at least one address field must be provided
@@ -261,10 +260,8 @@ const updateMyShippingAddress = asyncHandler(async (req, res) => {
     }
   });
 
-  // If country is not set (or is empty/falsey), you default it to "India".
-  if (!existingAddress.country) {
-    existingAddress.country = "India";
-  }
+  // Country is fixed for this project.
+  existingAddress.country = "India";
 
   if (existingAddress.phone && !PHONE_REGEX.test(existingAddress.phone)) {
     res.status(400);
