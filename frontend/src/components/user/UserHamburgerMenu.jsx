@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useCategories } from "../context/CategoriesContext";
-import { useAuth } from "../context/AuthContext";
+import { useCategories } from "../../context/CategoriesContext";
+import { useAuth } from "../../context/AuthContext";
 
 export default function UserHamburgerMenu() {
   const menuId = "userMenuOffcanvas";

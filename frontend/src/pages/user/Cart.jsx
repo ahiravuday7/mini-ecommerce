@@ -5,8 +5,8 @@ import {
   getCart,
   removeFromCart,
   updateCartItem,
-} from "../api/cart.api";
-import { useAuth } from "../context/AuthContext";
+} from "../../api/cart.api";
+import { useAuth } from "../../context/AuthContext";
 
 export default function Cart() {
   const navigate = useNavigate();

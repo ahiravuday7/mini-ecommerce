@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { updateMyShippingAddress } from "../api/account.api";
+import { updateMyShippingAddress } from "../../api/account.api";
 
 const PHONE_REGEX = /^[6-9]\d{9}$/;
 

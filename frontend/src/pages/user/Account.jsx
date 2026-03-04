@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { getMyAccount } from "../api/account.api";
-import AccountProfileForm from "../components/AccountProfileForm";
-import AccountShippingForm from "../components/AccountShippingForm";
-import { useAuth } from "../context/AuthContext";
+import { getMyAccount } from "../../api/account.api";
+import AccountProfileForm from "../../components/user/AccountProfileForm";
+import AccountShippingForm from "../../components/user/AccountShippingForm";
+import { useAuth } from "../../context/AuthContext";
 
 export default function Account() {
   const navigate = useNavigate();

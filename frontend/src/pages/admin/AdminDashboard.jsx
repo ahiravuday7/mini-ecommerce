@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { fetchAdminDashboard } from "../api/admin.dashboard.api";
+import { fetchAdminDashboard } from "../../api/admin.dashboard.api";
 
 // formatter for Indian currency
 const INR = new Intl.NumberFormat("en-IN", {

@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import UserHamburgerMenu from "./UserHamburgerMenu";
-import AdminHamburgerMenu from "./AdminHamburgerMenu";
-import UserProductSearchBar from "./UserProductSearchBar";
+import UserHamburgerMenu from "./user/UserHamburgerMenu";
+import AdminHamburgerMenu from "./admin/AdminHamburgerMenu";
+import UserProductSearchBar from "./user/UserProductSearchBar";
 
 const linkClass = ({ isActive }) =>
   `nav-link px-0 px-lg-2 ${isActive ? "fw-bold text-primary" : "text-secondary"}`;

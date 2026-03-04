@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { getOrderById } from "../api/orders.api";
-import { useAuth } from "../context/AuthContext";
+import { getOrderById } from "../../api/orders.api";
+import { useAuth } from "../../context/AuthContext";
 
 export default function OrderDetails() {
   const { id } = useParams();

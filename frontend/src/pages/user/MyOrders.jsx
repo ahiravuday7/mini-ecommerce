@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { getMyOrders } from "../api/orders.api";
-import { useAuth } from "../context/AuthContext";
+import { getMyOrders } from "../../api/orders.api";
+import { useAuth } from "../../context/AuthContext";
 
 export default function MyOrders() {
   const navigate = useNavigate();

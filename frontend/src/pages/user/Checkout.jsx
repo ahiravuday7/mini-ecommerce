@@ -1,11 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { getCart } from "../api/cart.api";
-import { placeOrder } from "../api/orders.api";
-import { getMyAccount } from "../api/account.api";
-import { useAuth } from "../context/AuthContext";
+import { getCart } from "../../api/cart.api";
+import { placeOrder } from "../../api/orders.api";
+import { getMyAccount } from "../../api/account.api";
+import { useAuth } from "../../context/AuthContext";
 
 const PHONE_REGEX = /^[6-9]\d{9}$/;
+const normalizePhone = (value) =>
+  String(value || "")
+    .replace(/\D/g, "")
+    .slice(0, 10);
+const normalizePincode = (value) =>
+  String(value || "")
+    .replace(/\D/g, "")
+    .slice(0, 6);
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -77,14 +85,14 @@ export default function Checkout() {
         setForm((prev) => ({
           ...prev,
           fullName: saved.fullName || prev.fullName,
-          phone: saved.phone || prev.phone,
+          phone: normalizePhone(saved.phone || prev.phone),
           addressLine1: saved.addressLine1 || prev.addressLine1,
           addressLine2: saved.addressLine2 || prev.addressLine2,
           landmark: saved.landmark || prev.landmark,
           city: saved.city || prev.city,
           state: saved.state || prev.state,
-          pincode: saved.pincode || prev.pincode,
-          country: saved.country || prev.country || "India",
+          pincode: normalizePincode(saved.pincode || prev.pincode),
+          country: "India",
         }));
       }
     } catch (e) {
@@ -110,15 +118,19 @@ export default function Checkout() {
 
   // Validate form
   const validate = () => {
+    const phone = normalizePhone(form.phone);
+    const pincode = normalizePincode(form.pincode);
+
     if (!form.fullName.trim()) return "Full name is required";
-    if (!form.phone.trim()) return "Phone is required";
-    if (!PHONE_REGEX.test(form.phone.trim())) {
+    if (!phone) return "Phone is required";
+    if (!PHONE_REGEX.test(phone)) {
       return "Phone must be a valid Indian mobile number";
     }
     if (!form.addressLine1.trim()) return "Address Line 1 is required";
     if (!form.city.trim()) return "City is required";
     if (!form.state.trim()) return "State is required";
-    if (!form.pincode.trim()) return "Pincode is required";
+    if (!pincode) return "Pincode is required";
+    if (!/^\d{6}$/.test(pincode)) return "Pincode must be 6 digits";
     if (items.length === 0) return "Your cart is empty";
     return "";
   };
@@ -127,7 +139,10 @@ export default function Checkout() {
   const onPlaceOrder = async (e) => {
     e.preventDefault();
     const msg = validate();
-    if (msg) return setError(msg);
+    if (msg) {
+      setError(msg);
+      return;
+    }
 
     try {
       setSubmitting(true);
@@ -137,14 +152,14 @@ export default function Checkout() {
         paymentMethod: "COD",
         shippingAddress: {
           fullName: form.fullName.trim(),
-          phone: form.phone.trim(),
+          phone: normalizePhone(form.phone),
           addressLine1: form.addressLine1.trim(),
           addressLine2: form.addressLine2.trim(),
           landmark: form.landmark.trim(),
           city: form.city.trim(),
           state: form.state.trim(),
-          pincode: form.pincode.trim(),
-          country: form.country.trim() || "India",
+          pincode: normalizePincode(form.pincode),
+          country: "India",
         },
       };
 
@@ -153,7 +168,8 @@ export default function Checkout() {
       // Success -> go to Orders list (or could go to order detail page)
       navigate("/orders", { state: { justPlacedOrderId: data._id } });
     } catch (e2) {
-      setError(e2?.response?.data?.message || "Failed to place order");
+      const message = e2?.response?.data?.message || "Failed to place order";
+      setError(message);
     } finally {
       setSubmitting(false);
     }
@@ -217,7 +233,7 @@ export default function Checkout() {
               <div className="card-body p-4">
                 <h5 className="mb-3">Shipping Address</h5>
 
-                <form onSubmit={onPlaceOrder} className="row g-3">
+                <form onSubmit={onPlaceOrder} className="row g-3" noValidate>
                   <div className="col-12">
                     <Field label="Full Name">
                       <input
@@ -234,9 +250,12 @@ export default function Checkout() {
                       <input
                         className="form-control"
                         value={form.phone}
+                        type="tel"
                         inputMode="numeric"
-                        pattern="^[6-9]\\d{9}$"
-                        onChange={(e) => setField("phone", e.target.value)}
+                        maxLength={10}
+                        onChange={(e) =>
+                          setField("phone", normalizePhone(e.target.value))
+                        }
                         placeholder="9999999999"
                       />
                     </Field>
@@ -306,7 +325,12 @@ export default function Checkout() {
                       <input
                         className="form-control"
                         value={form.pincode}
-                        onChange={(e) => setField("pincode", e.target.value)}
+                        type="tel"
+                        inputMode="numeric"
+                        maxLength={6}
+                        onChange={(e) =>
+                          setField("pincode", normalizePincode(e.target.value))
+                        }
                         placeholder="395000"
                       />
                     </Field>
@@ -317,7 +341,7 @@ export default function Checkout() {
                       <input
                         className="form-control"
                         value={form.country}
-                        onChange={(e) => setField("country", e.target.value)}
+                        readOnly
                         placeholder="India"
                       />
                     </Field>

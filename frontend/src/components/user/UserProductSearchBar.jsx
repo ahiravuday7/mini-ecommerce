@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchProducts } from "../api/products.api";
+import { fetchProducts } from "../../api/products.api";
 
 export default function UserProductSearchBar({
   className = "w-100",

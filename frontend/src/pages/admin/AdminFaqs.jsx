@@ -5,8 +5,8 @@ import {
   adminFetchFaqs,
   adminToggleFaq,
   adminUpdateFaq,
-} from "../api/faqs.api";
-import Pagination from "../components/Pagination";
+} from "../../api/faqs.api";
+import Pagination from "../../components/Pagination";
 
 const FAQS_PER_PAGE = 10;
 

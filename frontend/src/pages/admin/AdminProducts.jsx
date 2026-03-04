@@ -4,8 +4,8 @@ import {
   deleteProduct,
   fetchProducts,
   updateProduct,
-} from "../api/products.api";
-import Pagination from "../components/Pagination";
+} from "../../api/products.api";
+import Pagination from "../../components/Pagination";
 
 const PRODUCTS_PER_PAGE = 10;
 

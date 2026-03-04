@@ -1,5 +1,5 @@
 import { Navigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 
 export default function UserRoute({ children }) {
   // user -> logged-in user object, booting -> app is still checking session (like /auth/me API)

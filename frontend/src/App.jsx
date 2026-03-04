@@ -3,27 +3,27 @@ import AppLayout from "./layouts/AppLayout";
 
 import Home from "./pages/Home";
 import ProductDetails from "./pages/ProductDetails";
-import Cart from "./pages/Cart";
+import Cart from "./pages/user/Cart";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import Checkout from "./pages/Checkout";
-import MyOrders from "./pages/MyOrders";
-import Account from "./pages/Account";
-import AdminProducts from "./pages/AdminProducts";
-import OrderDetails from "./pages/OrderDetails";
+import Checkout from "./pages/user/Checkout";
+import MyOrders from "./pages/user/MyOrders";
+import Account from "./pages/user/Account";
+import AdminProducts from "./pages/admin/AdminProducts";
+import OrderDetails from "./pages/user/OrderDetails";
 import About from "./pages/About";
 import Careers from "./pages/Careers";
 import Contact from "./pages/Contact";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import FAQs from "./pages/FAQs";
-import AdminFaqs from "./pages/AdminFaqs";
+import AdminFaqs from "./pages/admin/AdminFaqs";
 import Products from "./pages/Products";
-import AdminDashboard from "./pages/AdminDashboard";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 
-import AdminRoute from "./components/AdminRoute";
-import UserRoute from "./components/UserRoute";
-import ShopperRoute from "./components/ShopperRoute";
-import AdminHome from "./pages/AdminHome";
+import AdminRoute from "./components/admin/AdminRoute";
+import UserRoute from "./components/user/UserRoute";
+import ShopperRoute from "./components/user/ShopperRoute";
+import AdminHome from "./pages/admin/AdminHome";
 
 export default function App() {
   return (
