@@ -24,6 +24,9 @@ export default function Checkout() {
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [pincodeLookupLoading, setPincodeLookupLoading] = useState(false);
+  const [pincodeLookupError, setPincodeLookupError] = useState("");
+  const [lastLookedUpPincode, setLastLookedUpPincode] = useState("");
 
   // Shipping form
   const [form, setForm] = useState({
@@ -94,6 +97,9 @@ export default function Checkout() {
           pincode: normalizePincode(saved.pincode || prev.pincode),
           country: "India",
         }));
+        const pin = normalizePincode(saved.pincode || "");
+        setLastLookedUpPincode(pin.length === 6 ? pin : "");
+        setPincodeLookupError("");
       }
     } catch (e) {
       setError(e?.response?.data?.message || "Failed to load cart");
@@ -116,6 +122,45 @@ export default function Checkout() {
   // Update form fields
   const setField = (k, v) => setForm((prev) => ({ ...prev, [k]: v }));
 
+  const fetchAddressFromPincode = async (pincode) => {
+    try {
+      setPincodeLookupLoading(true);
+      setPincodeLookupError("");
+
+      const res = await fetch(
+        `https://api.postalpincode.in/pincode/${pincode}`,
+      );
+      const data = await res.json();
+      const status = data?.[0]?.Status;
+      const postOffice = data?.[0]?.PostOffice?.[0];
+
+      if (!res.ok || status !== "Success" || !postOffice) {
+        setPincodeLookupError("Invalid pincode");
+        return;
+      }
+
+      const city = String(
+        postOffice?.District || postOffice?.Block || postOffice?.Name || "",
+      ).trim();
+      const state = String(postOffice?.State || "").trim();
+
+      setForm((prev) => {
+        if (prev.pincode !== pincode) return prev;
+        return {
+          ...prev,
+          city,
+          state,
+          country: "India",
+        };
+      });
+      setLastLookedUpPincode(pincode);
+    } catch {
+      setPincodeLookupError("Pincode lookup failed");
+    } finally {
+      setPincodeLookupLoading(false);
+    }
+  };
+
   // Validate form
   const validate = () => {
     const phone = normalizePhone(form.phone);
@@ -131,6 +176,8 @@ export default function Checkout() {
     if (!form.state.trim()) return "State is required";
     if (!pincode) return "Pincode is required";
     if (!/^\d{6}$/.test(pincode)) return "Pincode must be 6 digits";
+    if (pincode.length === 6 && pincodeLookupError) return pincodeLookupError;
+    if (pincodeLookupLoading) return "Please wait, fetching city and state";
     if (items.length === 0) return "Your cart is empty";
     return "";
   };
@@ -299,13 +346,42 @@ export default function Checkout() {
                   </div>
 
                   <div className="col-md-6">
-                    <Field label="City">
+                    <Field label="Pincode">
                       <input
                         className="form-control"
-                        value={form.city}
-                        onChange={(e) => setField("city", e.target.value)}
-                        placeholder="Surat"
+                        value={form.pincode}
+                        type="tel"
+                        inputMode="numeric"
+                        maxLength={6}
+                        onChange={(e) => {
+                          const pin = normalizePincode(e.target.value);
+                          setForm((prev) => ({
+                            ...prev,
+                            pincode: pin,
+                            ...(pin.length < 6
+                              ? { city: "", state: "", country: "India" }
+                              : {}),
+                          }));
+                          setPincodeLookupError("");
+                          if (pin.length < 6) {
+                            setLastLookedUpPincode("");
+                          }
+                          if (pin.length === 6 && pin !== lastLookedUpPincode) {
+                            fetchAddressFromPincode(pin);
+                          }
+                        }}
+                        placeholder="395000"
                       />
+                      {pincodeLookupLoading && (
+                        <small className="text-secondary">
+                          Fetching location...
+                        </small>
+                      )}
+                      {!pincodeLookupLoading && pincodeLookupError && (
+                        <small className="text-danger">
+                          {pincodeLookupError}
+                        </small>
+                      )}
                     </Field>
                   </div>
 
@@ -314,24 +390,19 @@ export default function Checkout() {
                       <input
                         className="form-control"
                         value={form.state}
-                        onChange={(e) => setField("state", e.target.value)}
+                        readOnly
                         placeholder="Gujarat"
                       />
                     </Field>
                   </div>
 
                   <div className="col-md-6">
-                    <Field label="Pincode">
+                    <Field label="City">
                       <input
                         className="form-control"
-                        value={form.pincode}
-                        type="tel"
-                        inputMode="numeric"
-                        maxLength={6}
-                        onChange={(e) =>
-                          setField("pincode", normalizePincode(e.target.value))
-                        }
-                        placeholder="395000"
+                        value={form.city}
+                        readOnly
+                        placeholder="Surat"
                       />
                     </Field>
                   </div>

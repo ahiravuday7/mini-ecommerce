@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const asyncHandler = require("../utils/asyncHandler");
+const { verifyIndianPincode } = require("../utils/pincodeValidator");
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const PHONE_REGEX = /^[6-9]\d{9}$/;
@@ -266,6 +267,19 @@ const updateMyShippingAddress = asyncHandler(async (req, res) => {
   if (existingAddress.phone && !PHONE_REGEX.test(existingAddress.phone)) {
     res.status(400);
     throw new Error("Invalid shipping phone format");
+  }
+
+  if (existingAddress.pincode) {
+    const pincodeResult = await verifyIndianPincode(existingAddress.pincode);
+    if (!pincodeResult.isValid) {
+      res.status(400);
+      throw new Error(pincodeResult.message);
+    }
+
+    existingAddress.pincode = pincodeResult.pincode;
+    existingAddress.city = pincodeResult.city;
+    existingAddress.state = pincodeResult.state;
+    existingAddress.country = "India";
   }
 
   user.shippingAddress = existingAddress;

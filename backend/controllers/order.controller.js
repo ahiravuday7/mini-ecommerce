@@ -2,6 +2,7 @@ const Order = require("../models/Order");
 const Cart = require("../models/Cart");
 const Product = require("../models/Product");
 const asyncHandler = require("../utils/asyncHandler");
+const { verifyIndianPincode } = require("../utils/pincodeValidator");
 
 const PHONE_REGEX = /^[6-9]\d{9}$/;
 
@@ -30,6 +31,24 @@ const placeOrder = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error("Invalid shipping phone format");
   }
+
+  const pincodeResult = await verifyIndianPincode(shippingAddress.pincode);
+  if (!pincodeResult.isValid) {
+    res.status(400);
+    throw new Error(pincodeResult.message);
+  }
+
+  const normalizedShippingAddress = {
+    fullName: String(shippingAddress.fullName || "").trim(),
+    phone: String(shippingAddress.phone || "").trim(),
+    addressLine1: String(shippingAddress.addressLine1 || "").trim(),
+    addressLine2: String(shippingAddress.addressLine2 || "").trim(),
+    landmark: String(shippingAddress.landmark || "").trim(),
+    city: pincodeResult.city,
+    state: pincodeResult.state,
+    pincode: pincodeResult.pincode,
+    country: "India",
+  };
 
   // // Get User Cart & replaces product ID with full product data
   const cart = await Cart.findOne({ user: req.user._id }).populate(
@@ -94,7 +113,7 @@ const placeOrder = asyncHandler(async (req, res) => {
   const order = await Order.create({
     user: req.user._id,
     items: orderItems,
-    shippingAddress,
+    shippingAddress: normalizedShippingAddress,
     paymentMethod,
     paymentStatus: paymentMethod === "COD" ? "pending" : "pending",
     itemsPrice,

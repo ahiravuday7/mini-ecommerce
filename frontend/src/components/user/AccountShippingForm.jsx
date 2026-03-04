@@ -128,6 +128,18 @@ export default function AccountShippingForm({ accountUser, onAccountUpdated }) {
       setAddressError("Pincode must be 6 digits");
       return;
     }
+    if (pincodeLookupLoading) {
+      setAddressError("Please wait, fetching city and state");
+      return;
+    }
+    if (trimmedPincode && pincodeLookupError) {
+      setAddressError(pincodeLookupError);
+      return;
+    }
+    if (trimmedPincode && (!normalizedAddress.city || !normalizedAddress.state)) {
+      setAddressError("City and state are required for a valid pincode");
+      return;
+    }
 
     try {
       setAddressSaving(true);
@@ -241,16 +253,6 @@ export default function AccountShippingForm({ accountUser, onAccountUpdated }) {
             </div>
 
             <div className="col-6">
-              <label className="form-label">City</label>
-              <input className="form-control" value={address.city} readOnly />
-            </div>
-
-            <div className="col-6">
-              <label className="form-label">State</label>
-              <input className="form-control" value={address.state} readOnly />
-            </div>
-
-            <div className="col-6">
               <label className="form-label">Pincode</label>
               <input
                 className="form-control"
@@ -286,6 +288,16 @@ export default function AccountShippingForm({ accountUser, onAccountUpdated }) {
             </div>
 
             <div className="col-6">
+              <label className="form-label">State</label>
+              <input className="form-control" value={address.state} readOnly />
+            </div>
+
+            <div className="col-6">
+              <label className="form-label">City</label>
+              <input className="form-control" value={address.city} readOnly />
+            </div>
+
+            <div className="col-6">
               <label className="form-label">Country</label>
               <input className="form-control" value={address.country} readOnly />
             </div>
@@ -293,7 +305,7 @@ export default function AccountShippingForm({ accountUser, onAccountUpdated }) {
 
           <button
             type="submit"
-            disabled={addressSaving || !hasAddressChanges}
+            disabled={addressSaving || pincodeLookupLoading || !hasAddressChanges}
             className="btn btn-primary mt-3"
           >
             {addressSaving ? "Saving..." : "Update Address"}
