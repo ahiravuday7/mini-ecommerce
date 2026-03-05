@@ -114,6 +114,15 @@ export default function Navbar() {
                           <li>
                             <Link
                               className="dropdown-item"
+                              to="/admin/users"
+                              onClick={() => setShowManagementMenu(false)}
+                            >
+                              Users
+                            </Link>
+                          </li>
+                          <li>
+                            <Link
+                              className="dropdown-item"
                               to="/admin/faqs"
                               onClick={() => setShowManagementMenu(false)}
                             >

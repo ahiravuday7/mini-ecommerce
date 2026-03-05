@@ -22,6 +22,13 @@ const tiles = [
     icon: "bi-patch-question",
     btnClass: "btn-outline-primary",
   },
+  {
+    title: "Users",
+    desc: "Manage users, account status, and order history",
+    to: "/admin/users",
+    icon: "bi-people",
+    btnClass: "btn-outline-primary",
+  },
 ];
 
 export default function AdminHome() {

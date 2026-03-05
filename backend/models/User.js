@@ -24,6 +24,8 @@ const userSchema = new mongoose.Schema(
     phone: { type: String, unique: true, sparse: true, trim: true },
     shippingAddress: { type: shippingAddressSchema, default: {} },
     isAdmin: { type: Boolean, default: false },
+    isBlocked: { type: Boolean, default: false, index: true },
+    blockedAt: { type: Date, default: null },
   },
   { timestamps: true },
 );

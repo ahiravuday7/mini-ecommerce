@@ -12,6 +12,7 @@ export default function AdminHamburgerMenu() {
 
   const managementItems = [
     { label: "Products", to: "/admin/products" },
+    { label: "Users", to: "/admin/users" },
     { label: "FAQs", to: "/admin/faqs" },
   ];
 

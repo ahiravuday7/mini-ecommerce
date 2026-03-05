@@ -104,6 +104,11 @@ const loginUser = asyncHandler(async (req, res) => {
     isEmail ? { email: normalizedIdentifier } : { phone: identifier },
   );
 
+  if (user?.isBlocked) {
+    res.status(403);
+    throw new Error("Your account is blocked. Please contact support.");
+  }
+
   if (user && (await user.matchPassword(password))) {
     generateToken(res, user._id);
 

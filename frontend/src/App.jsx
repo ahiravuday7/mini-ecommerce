@@ -19,6 +19,8 @@ import FAQs from "./pages/user/FAQs";
 import AdminFaqs from "./pages/admin/AdminFaqs";
 import Products from "./pages/user/Products";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminUserDetails from "./pages/admin/AdminUserDetails";
 
 import AdminRoute from "./components/admin/AdminRoute";
 import UserRoute from "./components/user/UserRoute";
@@ -156,6 +158,24 @@ export default function App() {
           element={
             <AdminRoute>
               <AdminFaqs />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/admin/users"
+          element={
+            <AdminRoute>
+              <AdminUsers />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/admin/users/:id"
+          element={
+            <AdminRoute>
+              <AdminUserDetails />
             </AdminRoute>
           }
         />
