@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import Pagination from "../../components/Pagination";
 import {
   deleteAdminUser,
   fetchAdminUserDetails,
@@ -12,6 +13,7 @@ const INR = new Intl.NumberFormat("en-IN", {
   currency: "INR",
   maximumFractionDigits: 2,
 });
+const ORDERS_PAGE_SIZE = 10;
 
 const formatDate = (value) => {
   if (!value) return "-";
@@ -56,7 +58,9 @@ export default function AdminUserDetails() {
       setUser(data.user || null);
       setStats(data.stats || null);
     } catch (e) {
-      setDetailsError(e?.response?.data?.message || "Failed to load user details");
+      setDetailsError(
+        e?.response?.data?.message || "Failed to load user details",
+      );
     } finally {
       setDetailsLoading(false);
     }
@@ -68,13 +72,15 @@ export default function AdminUserDetails() {
       setOrdersError("");
       const { data } = await fetchAdminUserOrders(id, {
         page: targetPage,
-        limit: 8,
+        limit: ORDERS_PAGE_SIZE,
       });
       setOrders(data.items || []);
       setOrdersPage(data.page || 1);
       setOrdersPages(data.pages || 1);
     } catch (e) {
-      setOrdersError(e?.response?.data?.message || "Failed to load user orders");
+      setOrdersError(
+        e?.response?.data?.message || "Failed to load user orders",
+      );
     } finally {
       setOrdersLoading(false);
     }
@@ -101,7 +107,9 @@ export default function AdminUserDetails() {
       setMsg(data?.message || "User status updated");
       await loadDetails();
     } catch (e) {
-      setActionError(e?.response?.data?.message || "Failed to update user status");
+      setActionError(
+        e?.response?.data?.message || "Failed to update user status",
+      );
     }
   };
 
@@ -171,10 +179,18 @@ export default function AdminUserDetails() {
           </p>
         </div>
         <div className="d-flex gap-2">
-          <button type="button" className="btn btn-outline-primary btn-sm" onClick={loadDetails}>
+          <button
+            type="button"
+            className="btn btn-outline-primary btn-sm"
+            onClick={loadDetails}
+          >
             Refresh Profile
           </button>
-          <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => loadOrders(ordersPage)}>
+          <button
+            type="button"
+            className="btn btn-outline-secondary btn-sm"
+            onClick={() => loadOrders(ordersPage)}
+          >
             Refresh Orders
           </button>
         </div>
@@ -196,19 +212,35 @@ export default function AdminUserDetails() {
           <div className="card border-0 shadow-sm h-100">
             <div className="card-body">
               <h5 className="mb-3">Profile</h5>
-              <div><b>Name:</b> {user.name || "-"}</div>
-              <div><b>Email:</b> {user.email || "-"}</div>
-              <div><b>Phone:</b> {user.phone || "-"}</div>
-              <div><b>Role:</b> {user.isAdmin ? "Admin" : "User"}</div>
-              <div><b>Status:</b> {statusText}</div>
-              <div><b>Joined:</b> {formatDate(user.createdAt)}</div>
-              <div><b>Blocked At:</b> {formatDate(user.blockedAt)}</div>
+              <div>
+                <b>Name:</b> {user.name || "-"}
+              </div>
+              <div>
+                <b>Email:</b> {user.email || "-"}
+              </div>
+              <div>
+                <b>Phone:</b> {user.phone || "-"}
+              </div>
+              <div>
+                <b>Role:</b> {user.isAdmin ? "Admin" : "User"}
+              </div>
+              <div>
+                <b>Status:</b> {statusText}
+              </div>
+              <div>
+                <b>Joined:</b> {formatDate(user.createdAt)}
+              </div>
+              <div>
+                <b>Blocked At:</b> {formatDate(user.blockedAt)}
+              </div>
               <hr />
               <div className="d-flex gap-2 flex-wrap">
                 <button
                   type="button"
                   className={`btn btn-sm ${
-                    user.isBlocked ? "btn-outline-success" : "btn-outline-warning"
+                    user.isBlocked
+                      ? "btn-outline-success"
+                      : "btn-outline-warning"
                   }`}
                   onClick={onToggleBlock}
                   disabled={user.isAdmin}
@@ -234,9 +266,15 @@ export default function AdminUserDetails() {
           <div className="card border-0 shadow-sm h-100">
             <div className="card-body">
               <h5 className="mb-3">Order Summary</h5>
-              <div><b>Total Orders:</b> {stats?.totalOrders || 0}</div>
-              <div><b>Total Spent:</b> {INR.format(Number(stats?.totalSpent || 0))}</div>
-              <div><b>Last Order:</b> {formatDate(stats?.lastOrderAt)}</div>
+              <div>
+                <b>Total Orders:</b> {stats?.totalOrders || 0}
+              </div>
+              <div>
+                <b>Total Spent:</b> {INR.format(Number(stats?.totalSpent || 0))}
+              </div>
+              <div>
+                <b>Last Order:</b> {formatDate(stats?.lastOrderAt)}
+              </div>
             </div>
           </div>
         </div>
@@ -275,8 +313,12 @@ export default function AdminUserDetails() {
                   {orders.map((order) => (
                     <tr key={order._id}>
                       <td>{order.invoiceNumber || order._id}</td>
-                      <td className="text-capitalize">{toTitle(order.status)}</td>
-                      <td className="text-capitalize">{toTitle(order.paymentStatus)}</td>
+                      <td className="text-capitalize">
+                        {toTitle(order.status)}
+                      </td>
+                      <td className="text-capitalize">
+                        {toTitle(order.paymentStatus)}
+                      </td>
                       <td className="text-end">
                         {INR.format(Number(order.totalPrice || 0))}
                       </td>
@@ -289,26 +331,12 @@ export default function AdminUserDetails() {
           )}
 
           {ordersPages > 1 && (
-            <div className="d-flex justify-content-end align-items-center gap-2">
-              <button
-                type="button"
-                className="btn btn-outline-secondary btn-sm"
-                disabled={ordersPage <= 1}
-                onClick={() => loadOrders(ordersPage - 1)}
-              >
-                Previous
-              </button>
-              <span className="small text-secondary">
-                Page {ordersPage} of {ordersPages}
-              </span>
-              <button
-                type="button"
-                className="btn btn-outline-secondary btn-sm"
-                disabled={ordersPage >= ordersPages}
-                onClick={() => loadOrders(ordersPage + 1)}
-              >
-                Next
-              </button>
+            <div className="mt-2">
+              <Pagination
+                currentPage={ordersPage}
+                totalPages={ordersPages}
+                onPageChange={loadOrders}
+              />
             </div>
           )}
         </div>

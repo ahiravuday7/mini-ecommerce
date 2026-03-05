@@ -12,6 +12,7 @@ const INR = new Intl.NumberFormat("en-IN", {
   currency: "INR",
   maximumFractionDigits: 2,
 });
+const PAGE_SIZE = 25;
 
 const formatDate = (value) => {
   if (!value) return "-";
@@ -53,7 +54,7 @@ export default function AdminUsers() {
 
       const { data } = await fetchAdminUsers({
         page: targetPage,
-        limit: 10,
+        limit: PAGE_SIZE,
         search: appliedSearch || undefined,
         status: statusFilter !== "all" ? statusFilter : undefined,
         role: roleFilter !== "all" ? roleFilter : undefined,
@@ -238,12 +239,18 @@ export default function AdminUsers() {
                     <tr key={u._id}>
                       <td>
                         <div className="fw-semibold">{u.name || "-"}</div>
-                        <div className="small text-secondary">{u.email || "-"}</div>
-                        <div className="small text-secondary">{u.phone || "-"}</div>
+                        <div className="small text-secondary">
+                          {u.email || "-"}
+                        </div>
+                        <div className="small text-secondary">
+                          {u.phone || "-"}
+                        </div>
                       </td>
                       <td>{u.isAdmin ? "Admin" : "User"}</td>
                       <td>
-                        <span className={`badge ${statusBadgeClass(u.isBlocked)}`}>
+                        <span
+                          className={`badge ${statusBadgeClass(u.isBlocked)}`}
+                        >
                           {u.isBlocked ? "Blocked" : "Active"}
                         </span>
                       </td>
@@ -264,11 +271,17 @@ export default function AdminUsers() {
                           <button
                             type="button"
                             className={`btn btn-sm ${
-                              u.isBlocked ? "btn-outline-success" : "btn-outline-warning"
+                              u.isBlocked
+                                ? "btn-outline-success"
+                                : "btn-outline-warning"
                             }`}
                             onClick={() => onToggleBlock(u)}
                             disabled={u.isAdmin}
-                            title={u.isAdmin ? "Admin accounts cannot be blocked" : ""}
+                            title={
+                              u.isAdmin
+                                ? "Admin accounts cannot be blocked"
+                                : ""
+                            }
                           >
                             {u.isBlocked ? "Unblock" : "Block"}
                           </button>
@@ -277,7 +290,11 @@ export default function AdminUsers() {
                             className="btn btn-outline-danger btn-sm"
                             onClick={() => onDeleteUser(u)}
                             disabled={u.isAdmin}
-                            title={u.isAdmin ? "Admin accounts cannot be deleted" : ""}
+                            title={
+                              u.isAdmin
+                                ? "Admin accounts cannot be deleted"
+                                : ""
+                            }
                           >
                             Delete
                           </button>
@@ -293,7 +310,11 @@ export default function AdminUsers() {
       </div>
 
       <div className="mb-4">
-        <Pagination currentPage={page} totalPages={pages} onPageChange={loadUsers} />
+        <Pagination
+          currentPage={page}
+          totalPages={pages}
+          onPageChange={loadUsers}
+        />
       </div>
     </div>
   );
