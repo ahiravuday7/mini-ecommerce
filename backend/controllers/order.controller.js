@@ -3,11 +3,29 @@ const Cart = require("../models/Cart");
 const Product = require("../models/Product");
 const asyncHandler = require("../utils/asyncHandler");
 const { verifyIndianPincode } = require("../utils/pincodeValidator");
+const { generateInvoiceNumber } = require("../utils/invoiceNumber");
 
 const PHONE_REGEX = /^[6-9]\d{9}$/;
 
 // helper (Round numbers to 2 decimal places)
 const round2 = (num) => Math.round((num + Number.EPSILON) * 100) / 100;
+
+//Fetch the order and ensure the requesting user is allowed to access it.
+const getOrderIfAllowed = async (orderId, reqUser, res) => {
+  const order = await Order.findById(orderId).populate("user", "name email");
+  if (!order) {
+    res.status(404);
+    throw new Error("Order not found");
+  }
+
+  const isOwner = order.user?._id?.toString() === reqUser._id.toString();
+  if (!isOwner && !reqUser.isAdmin) {
+    res.status(403);
+    throw new Error("Not allowed");
+  }
+
+  return order;
+};
 
 // POST /api/orders  (place order from cart)
 const placeOrder = asyncHandler(async (req, res) => {
@@ -49,6 +67,8 @@ const placeOrder = asyncHandler(async (req, res) => {
     pincode: pincodeResult.pincode,
     country: "India",
   };
+  const invoiceDate = new Date();
+  const invoiceNumber = generateInvoiceNumber(invoiceDate);
 
   // // Get User Cart & replaces product ID with full product data
   const cart = await Cart.findOne({ user: req.user._id }).populate(
@@ -116,6 +136,8 @@ const placeOrder = asyncHandler(async (req, res) => {
     shippingAddress: normalizedShippingAddress,
     paymentMethod,
     paymentStatus: paymentMethod === "COD" ? "pending" : "pending",
+    invoiceNumber,
+    invoiceDate,
     itemsPrice,
     shippingPrice,
     taxPrice,
@@ -141,24 +163,9 @@ const getMyOrders = asyncHandler(async (req, res) => {
 });
 
 // GET /api/orders/:id (owner or admin)
+//Fetch order from database,Check order exists,Check user owns order OR admin
 const getOrderById = asyncHandler(async (req, res) => {
-  // Find Order
-  const order = await Order.findById(req.params.id).populate(
-    "user",
-    "name email",
-  );
-  if (!order) {
-    res.status(404);
-    throw new Error("Order not found");
-  }
-
-  // Check if user is owner or admin
-  const isOwner = order.user?._id?.toString() === req.user._id.toString();
-  if (!isOwner && !req.user.isAdmin) {
-    res.status(403);
-    throw new Error("Not allowed");
-  }
-
+  const order = await getOrderIfAllowed(req.params.id, req.user, res);
   res.json(order);
 });
 

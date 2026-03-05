@@ -48,6 +48,8 @@ const orderSchema = new mongoose.Schema(
       enum: ["pending", "paid", "failed"], // enum restricts a field to only a predefined set of allowed values.
       default: "pending",
     },
+    invoiceNumber: { type: String, trim: true, index: true, sparse: true },
+    invoiceDate: { type: Date },
 
     itemsPrice: { type: Number, required: true, min: 0 },
     shippingPrice: { type: Number, required: true, min: 0 },

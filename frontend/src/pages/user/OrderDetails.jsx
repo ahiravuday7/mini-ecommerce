@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { getOrderById } from "../../api/orders.api";
+import { downloadOrderInvoice, getOrderById } from "../../api/orders.api";
 import { useAuth } from "../../context/AuthContext";
 
 export default function OrderDetails() {
@@ -11,6 +11,8 @@ export default function OrderDetails() {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [invoiceDownloading, setInvoiceDownloading] = useState(false);
+  const [invoiceError, setInvoiceError] = useState("");
 
   const totals = useMemo(() => {
     if (!order) return null;
@@ -59,6 +61,34 @@ export default function OrderDetails() {
 
   if (!user) return null; // Redirecting to login
 
+  //downloads the invoice PDF handler
+  const onDownloadInvoice = async () => {
+    if (!order?._id) return;
+
+    try {
+      setInvoiceDownloading(true);
+      setInvoiceError("");
+
+      const response = await downloadOrderInvoice(order._id);
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const objectUrl = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = `invoice-${order.invoiceNumber || order._id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch (e) {
+      setInvoiceError(
+        e?.response?.data?.message || "Failed to download invoice",
+      );
+    } finally {
+      setInvoiceDownloading(false);
+    }
+  };
+
   return (
     <div className="py-2">
       <div className="d-flex flex-wrap justify-content-between gap-2 mb-3">
@@ -99,11 +129,15 @@ export default function OrderDetails() {
                   <div className="d-flex flex-wrap justify-content-between gap-3">
                     <div>
                       <div className="fw-bold">
-                        Order ID:{" "}
-                        <span className="fw-semibold">{order._id}</span>
+                        Order #{order.invoiceNumber || order._id}
                       </div>
                       <div className="text-secondary small mt-1">
-                        Placed on: {new Date(order.createdAt).toLocaleString()}
+                        Placed on:{" "}
+                        {new Date(order.createdAt).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })}
                       </div>
                     </div>
 
@@ -112,8 +146,23 @@ export default function OrderDetails() {
                       <div className="small text-secondary">
                         Status: <b>{order.status}</b>
                       </div>
+                      <button
+                        type="button"
+                        className="btn btn-outline-primary btn-sm mt-2"
+                        onClick={onDownloadInvoice}
+                        disabled={invoiceDownloading}
+                      >
+                        {invoiceDownloading
+                          ? "Downloading..."
+                          : "Download Invoice"}
+                      </button>
                     </div>
                   </div>
+                  {invoiceError && (
+                    <div className="alert alert-danger mt-3 mb-0">
+                      {invoiceError}
+                    </div>
+                  )}
                 </div>
               </div>
 

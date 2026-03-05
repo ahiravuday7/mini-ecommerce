@@ -13,6 +13,7 @@ const authRoutes = require("./routes/auth.routes");
 const accountRoutes = require("./routes/account.routes");
 const cartRoutes = require("./routes/cart.routes");
 const orderRoutes = require("./routes/order.routes");
+const invoiceRoutes = require("./routes/invoiceRoutes");
 
 // faq
 const faqRoutes = require("./routes/faq.routes");
@@ -65,6 +66,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/account", accountRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/orders", invoiceRoutes);
 
 // FAQ
 app.use("/api/faqs", faqRoutes);
