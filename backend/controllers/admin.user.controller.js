@@ -17,7 +17,7 @@ const listAdminUsers = asyncHandler(async (req, res) => {
   const role = String(req.query.role || "all").toLowerCase();
 
   // Filter Object
-  const filter = {};
+  const filter = { isDeleted: { $ne: true } };
 
   // allows the admin to search users by name, email, or phone.
   if (search) {
@@ -96,7 +96,12 @@ const listAdminUsers = asyncHandler(async (req, res) => {
 
 // Fetch the user info (without password), Calculate that user’s order stats
 const getAdminUserDetails = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.params.id).select("-password").lean();
+  const user = await User.findOne({
+    _id: req.params.id,
+    isDeleted: { $ne: true },
+  })
+    .select("-password")
+    .lean();
 
   if (!user) {
     res.status(404);
@@ -133,7 +138,12 @@ const getAdminUserOrders = asyncHandler(async (req, res) => {
   const limit = Math.min(50, toPositiveInt(req.query.limit, 10));
   const status = String(req.query.status || "all").toLowerCase();
 
-  const user = await User.findById(req.params.id).select("_id").lean();
+  const user = await User.findOne({
+    _id: req.params.id,
+    isDeleted: { $ne: true },
+  })
+    .select("_id")
+    .lean();
   if (!user) {
     res.status(404);
     throw new Error("User not found");
@@ -174,7 +184,10 @@ const setAdminUserBlockStatus = asyncHandler(async (req, res) => {
     throw new Error("isBlocked must be boolean");
   }
 
-  const target = await User.findById(req.params.id);
+  const target = await User.findOne({
+    _id: req.params.id,
+    isDeleted: { $ne: true },
+  });
   if (!target) {
     res.status(404);
     throw new Error("User not found");
@@ -210,9 +223,12 @@ const setAdminUserBlockStatus = asyncHandler(async (req, res) => {
   });
 });
 
-//admin to permanently delete a user account
+// admin soft-delete a user account
 const deleteAdminUser = asyncHandler(async (req, res) => {
-  const target = await User.findById(req.params.id);
+  const target = await User.findOne({
+    _id: req.params.id,
+    isDeleted: { $ne: true },
+  });
   if (!target) {
     res.status(404);
     throw new Error("User not found");
@@ -228,10 +244,18 @@ const deleteAdminUser = asyncHandler(async (req, res) => {
     throw new Error("Admin accounts cannot be deleted");
   }
 
-  await Promise.all([
-    Cart.deleteOne({ user: target._id }),
-    User.deleteOne({ _id: target._id }),
-  ]);
+  await Cart.deleteOne({ user: target._id });
+
+  target.isDeleted = true;
+  target.deletedAt = new Date();
+  target.isBlocked = true;
+  target.blockedAt = new Date();
+  target.name = "Deleted User";
+  target.email = `deleted_${target._id}@deleted.local`;
+  target.phone = undefined;
+  target.shippingAddress = {};
+
+  await target.save();
 
   res.json({ message: "User deleted successfully" });
 });

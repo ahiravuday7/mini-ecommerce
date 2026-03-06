@@ -334,7 +334,7 @@ const deleteMyAccount = asyncHandler(async (req, res) => {
   user.isBlocked = true;
   user.blockedAt = new Date();
   user.name = "Deleted User";
-  user.email = undefined;
+  user.email = `deleted_${user._id}@deleted.local`;
   user.phone = undefined;
   user.shippingAddress = {};
 
