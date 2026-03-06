@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { deleteMyAccount, getMyAccount } from "../../api/account.api";
+import ConfirmDialog from "../../components/ConfirmDialog";
 import AccountProfileForm from "../../components/user/AccountProfileForm";
 import AccountShippingForm from "../../components/user/AccountShippingForm";
 import { useAuth } from "../../context/AuthContext";
@@ -16,6 +17,7 @@ export default function Account() {
   const [deletePassword, setDeletePassword] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const loadAccount = async () => {
     try {
@@ -51,23 +53,32 @@ export default function Account() {
     }
   }, [booting, user?._id]);
 
-  // delete account
-  const onDeleteAccount = async () => {
+  // open confirmation dialog for account deletion
+  const onDeleteAccount = () => {
     const password = deletePassword.trim();
     if (!password) {
       setDeleteError("Please enter your current password");
       return;
     }
 
-    const confirmed = window.confirm(
-      "Delete your account permanently? This action cannot be undone.",
-    );
-    if (!confirmed) return;
+    setDeleteError("");
+    setShowDeleteDialog(true);
+  };
+
+  // confirmed account deletion
+  const onConfirmDeleteAccount = async () => {
+    const password = deletePassword.trim();
+    if (!password) {
+      setDeleteError("Please enter your current password");
+      setShowDeleteDialog(false);
+      return;
+    }
 
     try {
       setDeleteLoading(true);
       setDeleteError("");
       await deleteMyAccount({ currentPassword: password });
+      setShowDeleteDialog(false);
       setAccountUser(null);
       updateUser(null);
       navigate("/login", { replace: true });
@@ -157,6 +168,18 @@ export default function Account() {
           </div>
         </div>
       </div>
+      <ConfirmDialog
+        show={showDeleteDialog}
+        title="Confirm Account Deletion"
+        message="Delete your account permanently? This action cannot be undone."
+        confirmText="Delete Account"
+        confirmVariant="danger"
+        loading={deleteLoading}
+        onCancel={() => {
+          if (!deleteLoading) setShowDeleteDialog(false);
+        }}
+        onConfirm={onConfirmDeleteAccount}
+      />
     </div>
   );
 }
