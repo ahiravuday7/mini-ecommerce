@@ -1,5 +1,6 @@
 const Product = require("../models/Product");
 const Category = require("../models/Category");
+const Order = require("../models/Order");
 const asyncHandler = require("../utils/asyncHandler");
 
 // Converts user input into a safe string by escaping regex special characters so it can be safely used inside a MongoDB $regex search.
@@ -107,7 +108,7 @@ const validateCategoryAndSubcategory = async (
 
 // GET /api/products
 const getProducts = asyncHandler(async (req, res) => {
-  const { q, category, subcategory } = req.query; //eg. q = "phone" (the search query) category = "electronics"
+  const { q, category, subcategory, sort } = req.query; //eg. q = "phone" (the search query) category = "electronics"
 
   const filter = {};
   if (category) filter.category = String(category).trim();
@@ -128,7 +129,47 @@ const getProducts = asyncHandler(async (req, res) => {
     ];
   }
 
-  const products = await Product.find(filter).sort({ createdAt: -1 }).lean();
+  // Bestseller sorting based on total quantity sold from the Order collection
+  let products = await Product.find(filter).sort({ createdAt: -1 }).lean(); //Fetch products normally
+
+  // Check if user requested Bestseller sorting
+  if (
+    String(sort || "")
+      .trim()
+      .toLowerCase() === "bestsellers"
+  ) {
+    const productIds = products.map((product) => product._id); //Collect product IDs
+
+    if (productIds.length > 0) {
+      //Now we calculate how many units of each product were sold.
+      const soldAgg = await Order.aggregate([
+        { $match: { status: { $ne: "cancelled" } } }, //Ignore cancelled orders
+        { $unwind: "$items" }, //Now each product sale becomes a separate row.
+        { $match: { "items.product": { $in: productIds } } }, //This avoids calculating sales for products not in current filter result.
+        {
+          $group: {
+            _id: "$items.product",
+            totalSold: { $sum: "$items.qty" }, //Group by product
+          },
+        },
+      ]);
+
+      //Convert aggregation result to Map
+      const soldByProductId = new Map(
+        soldAgg.map((item) => [String(item._id), Number(item.totalSold || 0)]),
+      );
+
+      //Sort products by total sold
+      products = products.sort((a, b) => {
+        const soldA = soldByProductId.get(String(a._id)) || 0;
+        const soldB = soldByProductId.get(String(b._id)) || 0;
+        if (soldB !== soldA) return soldB - soldA;
+
+        //Then sort by newest product first.
+        return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+      });
+    }
+  }
   //Product.find(filter): Asks the database to find all products that match the filter
   //.sort({ createdAt: -1 }): Sorts the results so the newest products appear at the top
   //.lean(): Converts the results to plain JavaScript objects to improve performance, improving performance by avoiding Mongoose document overhead

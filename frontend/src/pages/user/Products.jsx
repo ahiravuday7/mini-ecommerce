@@ -33,6 +33,13 @@ export default function Products() {
   const qFromUrl = (searchParams.get("q") || "").trim(); //reads query parameters from URL
   const categoryFromUrl = (searchParams.get("category") || "").trim();
   const subcategoryFromUrl = (searchParams.get("subcategory") || "").trim();
+  const sortFromUrl = (searchParams.get("sort") || "").trim().toLowerCase();
+
+  const urlSortToFilterSort = (sortValue) => {
+    if (sortValue === "bestsellers") return "bestsellers";
+    if (sortValue === "new-releases") return "newToOld";
+    return "";
+  };
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -43,6 +50,7 @@ export default function Products() {
     ...emptyFilters,
     category: categoryFromUrl,
     subcategory: subcategoryFromUrl,
+    sortBy: urlSortToFilterSort(sortFromUrl),
   });
 
   // Extract all unique brands from products and use them in filter dropdown
@@ -201,8 +209,9 @@ export default function Products() {
       ...prev,
       category: categoryFromUrl,
       subcategory: subcategoryFromUrl,
+      sortBy: urlSortToFilterSort(sortFromUrl),
     }));
-  }, [categoryFromUrl, subcategoryFromUrl]);
+  }, [categoryFromUrl, subcategoryFromUrl, sortFromUrl]);
 
   //So when user applies filters, they go back to page 1 automatically
   useEffect(() => {
@@ -214,15 +223,18 @@ export default function Products() {
     if (currentPage > totalPages) setCurrentPage(totalPages);
   }, [currentPage, totalPages]);
 
+  const shouldUseBestsellerApiSort = filters.sortBy === "bestsellers";
+
   useEffect(() => {
     const timer = setTimeout(() => {
       const params = {};
       if (qFromUrl) params.q = qFromUrl;
+      if (shouldUseBestsellerApiSort) params.sort = "bestsellers";
       load(params);
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [qFromUrl]);
+  }, [qFromUrl, shouldUseBestsellerApiSort]);
 
   // Update a filter value. If the category changes, reset the subcategory to avoid invalid selections.
   const setFilter = (key, value) => {
@@ -386,6 +398,7 @@ export default function Products() {
                   onChange={(e) => setFilter("sortBy", e.target.value)}
                 >
                   <option value="">Default</option>
+                  <option value="bestsellers">Bestsellers</option>
                   <option value="newToOld">New Arrivals</option>
                   <option value="priceLowToHigh">Price: Low to High</option>
                   <option value="priceHighToLow">Price: High to Low</option>
