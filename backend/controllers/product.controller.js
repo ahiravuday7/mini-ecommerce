@@ -1,6 +1,26 @@
 const Product = require("../models/Product");
 const asyncHandler = require("../utils/asyncHandler");
 
+// Converts user input into a safe string by escaping regex special characters so it can be safely used inside a MongoDB $regex search.
+const escapeRegex = (value) =>
+  String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+// Normalizes tag input by converting it into a clean array of trimmed, non-empty strings (whether tags are provided as an array or a comma-separated string).
+const sanitizeTags = (input) => {
+  if (Array.isArray(input)) {
+    return input.map((tag) => String(tag || "").trim()).filter(Boolean);
+  }
+
+  if (typeof input === "string") {
+    return input
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+};
+
 // GET /api/products
 const getProducts = asyncHandler(async (req, res) => {
   const { q, category } = req.query; //eg. q = "phone" (the search query) category = "electronics"
@@ -8,13 +28,17 @@ const getProducts = asyncHandler(async (req, res) => {
   const filter = {};
   if (category) filter.category = category;
 
-  // Search by title or brand
+  // Search by title, brand, category, description, tags
   const qTrim = (q || "").trim(); // trim query parameters to avoid unnecessary database queries caused by whitespace-only input. eg. qTrim = "phone", " " → "" (skip search)
 
   if (qTrim) {
+    const safeRegex = escapeRegex(qTrim);
     filter.$or = [
-      { title: { $regex: qTrim, $options: "i" } }, //$regex: q search term anywhere inside the product's title, $options: "i" Makes the search case-insensitive
-      { brand: { $regex: qTrim, $options: "i" } }, //$regex: q search term anywhere inside the product's brand, $options: "i" Makes the search case-insensitive
+      { title: { $regex: safeRegex, $options: "i" } }, //$regex: q search term anywhere inside the product's title, $options: "i" Makes the search case-insensitive
+      { brand: { $regex: safeRegex, $options: "i" } }, //$regex: q search term anywhere inside the product's brand, $options: "i" Makes the search case-insensitive
+      { category: { $regex: safeRegex, $options: "i" } },
+      { description: { $regex: safeRegex, $options: "i" } },
+      { tags: { $regex: safeRegex, $options: "i" } },
     ];
   }
 
@@ -45,6 +69,7 @@ const createProduct = asyncHandler(async (req, res) => {
     brand = "",
     category = "General",
     description = "",
+    tags = [],
     price,
     mrp = 0,
     stock = 0,
@@ -73,6 +98,7 @@ const createProduct = asyncHandler(async (req, res) => {
     brand,
     category,
     description,
+    tags: sanitizeTags(tags),
     price: Number(price),
     mrp: Number(mrp),
     stock: Number(stock),
@@ -109,6 +135,7 @@ const updateProduct = asyncHandler(async (req, res) => {
     "brand",
     "category",
     "description",
+    "tags",
     "price",
     "mrp",
     "stock",
@@ -134,6 +161,11 @@ const updateProduct = asyncHandler(async (req, res) => {
         }
 
         product[field] = Number(str); //"500" becomes 500 (proper number).
+      }
+
+      // Tags normalization
+      else if (field === "tags") {
+        product.tags = sanitizeTags(value);
       }
 
       // String fields trimming

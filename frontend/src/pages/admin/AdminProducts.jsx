@@ -29,6 +29,21 @@ const getDiscountPercent = (product) => {
   return Math.round(((mrp - price) / mrp) * 100);
 };
 
+// for product tag
+const parseTags = (value) =>
+  String(value || "")
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+
+const toTagsText = (tags) =>
+  Array.isArray(tags)
+    ? tags
+        .map((tag) => String(tag || "").trim())
+        .filter(Boolean)
+        .join(", ")
+    : "";
+
 export default function AdminProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -71,6 +86,7 @@ export default function AdminProducts() {
     brand: "",
     category: "General",
     description: "",
+    tagsText: "",
     price: "",
     mrp: "",
     stock: "",
@@ -124,13 +140,17 @@ export default function AdminProducts() {
       const brandLower = brand.toLowerCase();
       const categoryLower = category.toLowerCase();
       const description = String(p.description || "").toLowerCase();
+      const tagsLower = Array.isArray(p.tags)
+        ? p.tags.join(" ").toLowerCase()
+        : "";
 
       if (
         q &&
         !title.includes(q) &&
         !brandLower.includes(q) &&
         !categoryLower.includes(q) &&
-        !description.includes(q)
+        !description.includes(q) &&
+        !tagsLower.includes(q)
       ) {
         return false;
       }
@@ -224,6 +244,7 @@ export default function AdminProducts() {
       const payload = {
         ...newP,
         title: newP.title.trim(),
+        tags: parseTags(newP.tagsText),
         price: Number(newP.price),
         // converts price/mrp/stock to numbers, defaults empty mrp/stock to 0
         mrp: newP.mrp === "" ? 0 : Number(newP.mrp),
@@ -238,6 +259,7 @@ export default function AdminProducts() {
         brand: "",
         category: "General",
         description: "",
+        tagsText: "",
         price: "",
         mrp: "",
         stock: "",
@@ -264,6 +286,7 @@ export default function AdminProducts() {
       brand: p.brand || "",
       category: p.category || "General",
       description: p.description || "",
+      tagsText: toTagsText(p.tags),
       price: p.price ?? 0,
       mrp: p.mrp ?? 0,
       stock: p.stock ?? 0,
@@ -294,6 +317,7 @@ export default function AdminProducts() {
       const payload = {
         ...editP,
         title: editP.title.trim(),
+        tags: parseTags(editP.tagsText),
         price: Number(editP.price),
         mrp: editP.mrp === "" ? 0 : Number(editP.mrp),
         stock: editP.stock === "" ? 0 : Number(editP.stock),
@@ -353,7 +377,7 @@ export default function AdminProducts() {
             <input
               type="text"
               className="form-control"
-              placeholder="Search by title, brand, category..."
+              placeholder="Search by title, brand, category, description, tags..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
             />
@@ -587,6 +611,17 @@ export default function AdminProducts() {
                 </Field>
               </div>
 
+              <div className="col-12">
+                <Field label="Tags (comma separated)">
+                  <input
+                    className="form-control"
+                    value={newP.tagsText}
+                    onChange={(e) => setNewField("tagsText", e.target.value)}
+                    placeholder="wireless, gaming, rgb"
+                  />
+                </Field>
+              </div>
+
               <div className="col-md-4">
                 <Field label="Price">
                   <input
@@ -685,6 +720,11 @@ export default function AdminProducts() {
                         {p.brand ? `${p.brand} - ` : ""}
                         {p.category || "General"} - Stock: {p.stock ?? 0}
                       </div>
+                      {Array.isArray(p.tags) && p.tags.length > 0 && (
+                        <div className="small text-secondary">
+                          Tags: {p.tags.join(", ")}
+                        </div>
+                      )}
                     </div>
 
                     <div className="col-sm-auto fw-bold">{`\u20B9${p.price}`}</div>
@@ -774,6 +814,18 @@ export default function AdminProducts() {
                                 setEditField("description", e.target.value)
                               }
                               rows={3}
+                            />
+                          </Field>
+                        </div>
+
+                        <div className="col-12">
+                          <Field label="Tags (comma separated)">
+                            <input
+                              className="form-control"
+                              value={editP.tagsText}
+                              onChange={(e) =>
+                                setEditField("tagsText", e.target.value)
+                              }
                             />
                           </Field>
                         </div>
