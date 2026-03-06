@@ -5,6 +5,7 @@ import {
   fetchProducts,
   updateProduct,
 } from "../../api/products.api";
+import ConfirmDialog from "../../components/ConfirmDialog";
 import Pagination from "../../components/Pagination";
 
 const PRODUCTS_PER_PAGE = 10;
@@ -39,6 +40,29 @@ export default function AdminProducts() {
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState(emptyFilters);
   const [searchText, setSearchText] = useState("");
+  const [confirmDialog, setConfirmDialog] = useState({
+    show: false,
+    title: "",
+    message: "",
+    confirmText: "Confirm",
+    confirmVariant: "danger",
+    onConfirm: null,
+  });
+
+  const openConfirmDialog = (config) => {
+    setConfirmDialog({
+      show: true,
+      title: config.title || "Confirm Action",
+      message: config.message || "Are you sure?",
+      confirmText: config.confirmText || "Confirm",
+      confirmVariant: config.confirmVariant || "danger",
+      onConfirm: config.onConfirm || null,
+    });
+  };
+
+  const closeConfirmDialog = () => {
+    setConfirmDialog((prev) => ({ ...prev, show: false, onConfirm: null }));
+  };
 
   // Create form
   const [creating, setCreating] = useState(false);
@@ -285,19 +309,26 @@ export default function AdminProducts() {
   };
 
   // Delete product
-  const onDelete = async (id) => {
-    const ok = window.confirm("Delete this product?");
-    if (!ok) return;
+  const onDelete = (id) => {
+    openConfirmDialog({
+      title: "Delete Product",
+      message: "Delete this product?",
+      confirmText: "Delete",
+      confirmVariant: "danger",
+      onConfirm: async () => {
+        closeConfirmDialog();
 
-    try {
-      setError("");
-      setMsg("");
-      await deleteProduct(id);
-      setMsg("Product deleted");
-      await load();
-    } catch (e) {
-      setError(e?.response?.data?.message || "Failed to delete product");
-    }
+        try {
+          setError("");
+          setMsg("");
+          await deleteProduct(id);
+          setMsg("Product deleted");
+          await load();
+        } catch (e) {
+          setError(e?.response?.data?.message || "Failed to delete product");
+        }
+      },
+    });
   };
 
   const setFilter = (key, value) => {
@@ -814,6 +845,17 @@ export default function AdminProducts() {
           </div>
         </>
       )}
+
+      <ConfirmDialog
+        show={confirmDialog.show}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        confirmText={confirmDialog.confirmText}
+        confirmVariant={confirmDialog.confirmVariant}
+        disableConfirm={!confirmDialog.onConfirm}
+        onCancel={closeConfirmDialog}
+        onConfirm={() => confirmDialog.onConfirm?.()}
+      />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import ConfirmDialog from "../../components/ConfirmDialog";
 import Pagination from "../../components/Pagination";
 import {
   deleteAdminUser,
@@ -45,6 +46,29 @@ export default function AdminUsers() {
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [confirmDialog, setConfirmDialog] = useState({
+    show: false,
+    title: "",
+    message: "",
+    confirmText: "Confirm",
+    confirmVariant: "danger",
+    onConfirm: null,
+  });
+
+  const openConfirmDialog = (config) => {
+    setConfirmDialog({
+      show: true,
+      title: config.title || "Confirm Action",
+      message: config.message || "Are you sure?",
+      confirmText: config.confirmText || "Confirm",
+      confirmVariant: config.confirmVariant || "danger",
+      onConfirm: config.onConfirm || null,
+    });
+  };
+
+  const closeConfirmDialog = () => {
+    setConfirmDialog((prev) => ({ ...prev, show: false, onConfirm: null }));
+  };
 
   const loadUsers = async (targetPage = page) => {
     try {
@@ -89,39 +113,50 @@ export default function AdminUsers() {
     setPage(1);
   };
 
-  const onToggleBlock = async (user) => {
+  const onToggleBlock = (user) => {
     const nextBlocked = !user.isBlocked;
-    const confirmed = window.confirm(
-      `${nextBlocked ? "Block" : "Unblock"} ${user.name || "this user"}?`,
-    );
-    if (!confirmed) return;
 
-    try {
-      setMsg("");
-      setError("");
-      const { data } = await setAdminUserBlockStatus(user._id, nextBlocked);
-      setMsg(data?.message || "User status updated");
-      await loadUsers(page);
-    } catch (e) {
-      setError(e?.response?.data?.message || "Failed to update user status");
-    }
+    openConfirmDialog({
+      title: nextBlocked ? "Block User" : "Unblock User",
+      message: `${nextBlocked ? "Block" : "Unblock"} ${user.name || "this user"}?`,
+      confirmText: nextBlocked ? "Block" : "Unblock",
+      confirmVariant: nextBlocked ? "warning" : "success",
+      onConfirm: async () => {
+        closeConfirmDialog();
+
+        try {
+          setMsg("");
+          setError("");
+          const { data } = await setAdminUserBlockStatus(user._id, nextBlocked);
+          setMsg(data?.message || "User status updated");
+          await loadUsers(page);
+        } catch (e) {
+          setError(e?.response?.data?.message || "Failed to update user status");
+        }
+      },
+    });
   };
 
-  const onDeleteUser = async (user) => {
-    const confirmed = window.confirm(
-      `Delete ${user.name || "this user"} permanently? This action cannot be undone.`,
-    );
-    if (!confirmed) return;
+  const onDeleteUser = (user) => {
+    openConfirmDialog({
+      title: "Delete User",
+      message: `Delete ${user.name || "this user"} permanently? This action cannot be undone.`,
+      confirmText: "Delete",
+      confirmVariant: "danger",
+      onConfirm: async () => {
+        closeConfirmDialog();
 
-    try {
-      setMsg("");
-      setError("");
-      const { data } = await deleteAdminUser(user._id);
-      setMsg(data?.message || "User deleted");
-      await loadUsers(page);
-    } catch (e) {
-      setError(e?.response?.data?.message || "Failed to delete user");
-    }
+        try {
+          setMsg("");
+          setError("");
+          const { data } = await deleteAdminUser(user._id);
+          setMsg(data?.message || "User deleted");
+          await loadUsers(page);
+        } catch (e) {
+          setError(e?.response?.data?.message || "Failed to delete user");
+        }
+      },
+    });
   };
 
   return (
@@ -316,6 +351,17 @@ export default function AdminUsers() {
           onPageChange={loadUsers}
         />
       </div>
+
+      <ConfirmDialog
+        show={confirmDialog.show}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        confirmText={confirmDialog.confirmText}
+        confirmVariant={confirmDialog.confirmVariant}
+        disableConfirm={!confirmDialog.onConfirm}
+        onCancel={closeConfirmDialog}
+        onConfirm={() => confirmDialog.onConfirm?.()}
+      />
     </div>
   );
 }

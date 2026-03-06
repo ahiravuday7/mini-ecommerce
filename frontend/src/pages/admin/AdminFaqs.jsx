@@ -6,6 +6,7 @@ import {
   adminToggleFaq,
   adminUpdateFaq,
 } from "../../api/faqs.api";
+import ConfirmDialog from "../../components/ConfirmDialog";
 import Pagination from "../../components/Pagination";
 
 const FAQS_PER_PAGE = 10;
@@ -52,6 +53,29 @@ export default function AdminFaqs() {
   const [editingId, setEditingId] = useState(""); //tells which FAQ card is in edit mode
   const [editFaq, setEditFaq] = useState(null); // holds edit form values
   const [savingEdit, setSavingEdit] = useState(false); //disables save button while API is running
+  const [confirmDialog, setConfirmDialog] = useState({
+    show: false,
+    title: "",
+    message: "",
+    confirmText: "Confirm",
+    confirmVariant: "danger",
+    onConfirm: null,
+  });
+
+  const openConfirmDialog = (config) => {
+    setConfirmDialog({
+      show: true,
+      title: config.title || "Confirm Action",
+      message: config.message || "Are you sure?",
+      confirmText: config.confirmText || "Confirm",
+      confirmVariant: config.confirmVariant || "danger",
+      onConfirm: config.onConfirm || null,
+    });
+  };
+
+  const closeConfirmDialog = () => {
+    setConfirmDialog((prev) => ({ ...prev, show: false, onConfirm: null }));
+  };
 
   // Fetch FAQs whenever filters/search/refresh changes (useEffect),debounce-It waits 300ms before calling API.
   useEffect(() => {
@@ -239,20 +263,27 @@ export default function AdminFaqs() {
   };
 
   // Shows confirm dialog, then delete API, refresh list.
-  const onDelete = async (id) => {
-    const ok = window.confirm("Delete this FAQ?");
-    if (!ok) return;
+  const onDelete = (id) => {
+    openConfirmDialog({
+      title: "Delete FAQ",
+      message: "Delete this FAQ?",
+      confirmText: "Delete",
+      confirmVariant: "danger",
+      onConfirm: async () => {
+        closeConfirmDialog();
 
-    try {
-      setError("");
-      setMsg("");
-      await adminDeleteFaq(id);
-      setMsg("FAQ deleted");
-      if (editingId === id) cancelEdit();
-      setRefreshTick((prev) => prev + 1);
-    } catch (e) {
-      setError(e?.response?.data?.message || "Failed to delete FAQ");
-    }
+        try {
+          setError("");
+          setMsg("");
+          await adminDeleteFaq(id);
+          setMsg("FAQ deleted");
+          if (editingId === id) cancelEdit();
+          setRefreshTick((prev) => prev + 1);
+        } catch (e) {
+          setError(e?.response?.data?.message || "Failed to delete FAQ");
+        }
+      },
+    });
   };
 
   return (
@@ -693,6 +724,17 @@ export default function AdminFaqs() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        show={confirmDialog.show}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        confirmText={confirmDialog.confirmText}
+        confirmVariant={confirmDialog.confirmVariant}
+        disableConfirm={!confirmDialog.onConfirm}
+        onCancel={closeConfirmDialog}
+        onConfirm={() => confirmDialog.onConfirm?.()}
+      />
     </div>
   );
 }
