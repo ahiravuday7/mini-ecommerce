@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { fetchAdminDashboard } from "../../api/admin.dashboard.api";
+import { getProductCategoryLabel } from "../../utils/productCategory";
 
 // formatter for Indian currency
 const INR = new Intl.NumberFormat("en-IN", {
@@ -239,7 +240,7 @@ export default function AdminDashboard() {
                         <div className="fw-semibold">{product.title}</div>
                         <div className="small text-secondary">
                           {product.brand ? `${product.brand} - ` : ""}
-                          {product.category || "General"}
+                          {getProductCategoryLabel(product)}
                         </div>
                       </div>
                       <span

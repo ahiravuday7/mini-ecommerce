@@ -16,6 +16,13 @@ const tiles = [
     btnClass: "btn-outline-primary",
   },
   {
+    title: "Categories",
+    desc: "Manage category and subcategory hierarchy",
+    to: "/admin/categories",
+    icon: "bi-diagram-3",
+    btnClass: "btn-outline-primary",
+  },
+  {
     title: "FAQs",
     desc: "Manage customer help content",
     to: "/admin/faqs",

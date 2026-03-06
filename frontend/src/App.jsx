@@ -10,6 +10,7 @@ import Checkout from "./pages/user/Checkout";
 import MyOrders from "./pages/user/MyOrders";
 import Account from "./pages/user/Account";
 import AdminProducts from "./pages/admin/AdminProducts";
+import AdminCategories from "./pages/admin/AdminCategories";
 import OrderDetails from "./pages/user/OrderDetails";
 import About from "./pages/About";
 import Careers from "./pages/Careers";
@@ -140,6 +141,15 @@ export default function App() {
           element={
             <AdminRoute>
               <AdminProducts />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/admin/categories"
+          element={
+            <AdminRoute>
+              <AdminCategories />
             </AdminRoute>
           }
         />

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { getProductCategoryLabel } from "../utils/productCategory";
 
 export default function ProductCard({ p }) {
   return (
@@ -21,7 +22,7 @@ export default function ProductCard({ p }) {
 
           <p className="text-secondary small mb-2">
             {p.brand ? `${p.brand} - ` : ""}
-            {p.category || "General"}
+            {getProductCategoryLabel(p)}
           </p>
 
           <div className="d-flex align-items-baseline gap-2 mb-2">

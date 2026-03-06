@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   createProduct,
   deleteProduct,
@@ -7,6 +7,8 @@ import {
 } from "../../api/products.api";
 import ConfirmDialog from "../../components/ConfirmDialog";
 import Pagination from "../../components/Pagination";
+import { useCategories } from "../../context/CategoriesContext";
+import { getProductCategoryLabel } from "../../utils/productCategory";
 
 const PRODUCTS_PER_PAGE = 10;
 
@@ -14,6 +16,7 @@ const PRODUCTS_PER_PAGE = 10;
 const emptyFilters = {
   brand: "",
   category: "",
+  subcategory: "",
   minPrice: "",
   maxPrice: "",
   minDiscount: "",
@@ -45,6 +48,7 @@ const toTagsText = (tags) =>
     : "";
 
 export default function AdminProducts() {
+  const { categories: categoryTree } = useCategories();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1); //// When page loads -> starts from page 1
@@ -84,7 +88,8 @@ export default function AdminProducts() {
   const [newP, setNewP] = useState({
     title: "",
     brand: "",
-    category: "General",
+    category: "",
+    subcategory: "",
     description: "",
     tagsText: "",
     price: "",
@@ -97,10 +102,72 @@ export default function AdminProducts() {
   const [editingId, setEditingId] = useState("");
   const [editP, setEditP] = useState(null);
 
+  //This allows fast lookup of subcategories by category.
+  const subcategoriesByCategory = useMemo(() => {
+    const map = new Map();
+
+    //Safe iteration over categoryTree ,This checks if categoryTree is actually an array.If yes -> use it,If not -> use empty array
+    (Array.isArray(categoryTree) ? categoryTree : []).forEach((category) => {
+      const categoryName = String(category?.name || "").trim();
+      if (!categoryName) return;
+
+      // Ensure subcategories is an array
+      const subcategories = (
+        Array.isArray(category?.subcategories) ? category.subcategories : []
+      )
+        .map((sub) => String(sub || "").trim())
+        .filter(Boolean);
+
+      //Store result in Map
+      map.set(categoryName, subcategories);
+    });
+
+    return map;
+  }, [categoryTree]); //The Map will only rebuild when categoryTree changes.
+
+  // For a selected category, it returns all subcategories from:configured category tree,plus any subcategories already present in product data
+  const getSubcategoriesByCategory = useCallback(
+    //collect all unique subcategories for a given category.
+    (category, productList = []) => {
+      const deduped = new Set(subcategoriesByCategory.get(category) || []);
+
+      // adds additional subcategories from products and removes duplicates before returning the final list.
+      productList.forEach((product) => {
+        const productCategory = String(product?.category || "").trim();
+        const subcategory = String(product?.subcategory || "").trim();
+        if (!subcategory || productCategory !== category) return;
+        deduped.add(subcategory); //deduped is a Set, so duplicates are automatically removed.
+      });
+
+      return Array.from(deduped); //Convert Set -> Array
+    },
+    [subcategoriesByCategory], //This means the function will only re-create when the category configuration map changes.
+  );
+
+  // first takes configured categories from context,then adds any extra categories discovered in products
+  const configuredCategories = useMemo(
+    () =>
+      Array.from(subcategoriesByCategory.keys()).sort((a, b) =>
+        a.localeCompare(b),
+      ),
+    [subcategoriesByCategory],
+  );
+
+  // categories used in your AdminProducts UI by combining:Configured categories (from your category configuration / context),Categories discovered from products in the database
   const categories = useMemo(() => {
-    const set = new Set(products.map((p) => p.category).filter(Boolean)); // Extract categories from products, Remove empty values, Remove duplicates using Set
-    return ["General", ...Array.from(set).filter((x) => x !== "General")]; // "General" always appears first, No duplicate "General" , Convert Set -> Array
-  }, [products]);
+    const discovered = new Set();
+
+    products.forEach((product) => {
+      const category = String(product?.category || "").trim();
+      if (category) discovered.add(category);
+    });
+
+    const extraCategories = Array.from(discovered)
+      .filter((category) => !subcategoriesByCategory.has(category))
+      .sort((a, b) => a.localeCompare(b));
+
+    return [...configuredCategories, ...extraCategories];
+  }, [products, configuredCategories, subcategoriesByCategory]);
 
   //Extract all unique brands from products and use them in filter dropdown
   const filterBrands = useMemo(() => {
@@ -112,11 +179,46 @@ export default function AdminProducts() {
 
   //Extract all categories from products and use them in filter dropdown
   const filterCategories = useMemo(() => {
-    const set = new Set(
-      products.map((p) => (p.category || "").trim()).filter(Boolean),
-    );
-    return ["", ...Array.from(set).sort((a, b) => a.localeCompare(b))];
-  }, [products]);
+    return ["", ...categories];
+  }, [categories]);
+
+  // list of subcategories used in the filter dropdown, depending on whether a category filter is selected or not. It also removes duplicates and sorts them.
+  const filterSubcategories = useMemo(() => {
+    const deduped = new Set();
+
+    if (filters.category) {
+      getSubcategoriesByCategory(filters.category, products).forEach((sub) =>
+        deduped.add(sub),
+      );
+    } else {
+      subcategoriesByCategory.forEach((subcategoryList) => {
+        subcategoryList.forEach((subcategory) => deduped.add(subcategory));
+      });
+
+      products.forEach((product) => {
+        const subcategory = String(product?.subcategory || "").trim();
+        if (subcategory) deduped.add(subcategory);
+      });
+    }
+
+    return ["", ...Array.from(deduped).sort((a, b) => a.localeCompare(b))];
+  }, [
+    products,
+    filters.category,
+    subcategoriesByCategory,
+    getSubcategoriesByCategory,
+  ]);
+
+  // New create/edit subcategory option lists
+  const createSubcategories = useMemo(
+    () => getSubcategoriesByCategory(newP.category, products),
+    [newP.category, products, getSubcategoriesByCategory],
+  );
+
+  const editSubcategories = useMemo(
+    () => getSubcategoriesByCategory(editP?.category || "", products),
+    [editP?.category, products, getSubcategoriesByCategory],
+  );
 
   const filteredProducts = useMemo(() => {
     // Convert into number (or null)
@@ -133,12 +235,14 @@ export default function AdminProducts() {
     const result = products.filter((p) => {
       const brand = (p.brand || "").trim();
       const category = (p.category || "").trim();
+      const subcategory = (p.subcategory || "").trim();
       const price = Number(p.price || 0);
       const rating = Number(p.rating || 0);
       const discount = getDiscountPercent(p);
       const title = String(p.title || "").toLowerCase();
       const brandLower = brand.toLowerCase();
       const categoryLower = category.toLowerCase();
+      const subcategoryLower = subcategory.toLowerCase();
       const description = String(p.description || "").toLowerCase();
       const tagsLower = Array.isArray(p.tags)
         ? p.tags.join(" ").toLowerCase()
@@ -149,6 +253,7 @@ export default function AdminProducts() {
         !title.includes(q) &&
         !brandLower.includes(q) &&
         !categoryLower.includes(q) &&
+        !subcategoryLower.includes(q) &&
         !description.includes(q) &&
         !tagsLower.includes(q)
       ) {
@@ -157,6 +262,8 @@ export default function AdminProducts() {
 
       if (filters.brand && brand !== filters.brand) return false;
       if (filters.category && category !== filters.category) return false;
+      if (filters.subcategory && subcategory !== filters.subcategory)
+        return false;
       if (minPrice !== null && price < minPrice) return false;
       if (maxPrice !== null && price > maxPrice) return false;
       if (minDiscount !== null && discount < minDiscount) return false;
@@ -219,14 +326,48 @@ export default function AdminProducts() {
     setCurrentPage(1);
   }, [filters, searchText]);
 
+  // This useEffect automatically sets a default category and subcategory in the Create Product form when the current category is missing or invalid.
+  useEffect(() => {
+    if (categories.length === 0) return;
+
+    const categoryMissing =
+      !newP.category || !categories.includes(newP.category);
+    if (!categoryMissing) return;
+
+    const defaultCategory = categories[0];
+    const deduped = new Set(subcategoriesByCategory.get(defaultCategory) || []);
+
+    products.forEach((product) => {
+      const productCategory = String(product?.category || "").trim();
+      const subcategory = String(product?.subcategory || "").trim();
+      if (!subcategory || productCategory !== defaultCategory) return;
+      deduped.add(subcategory);
+    });
+
+    const defaultSubcategory = Array.from(deduped)[0] || "";
+
+    setNewP((prev) => ({
+      ...prev,
+      category: defaultCategory,
+      subcategory: defaultSubcategory,
+    }));
+  }, [categories, newP.category, products, subcategoriesByCategory]);
+
   // It uses a functional state update and computed property names to update a single field without mutating or overwriting the existing state.
   const setNewField = (k, v) => setNewP((p) => ({ ...p, [k]: v }));
 
-  // Validate new product form
+  // Validate new product form, It checks whether the required fields are filled correctly and returns an error message if something is wrong.
   const validateNew = () => {
     if (!newP.title.trim()) return "Title is required";
+    if (!newP.category.trim()) return "Category is required";
     if (newP.price === "" || Number(newP.price) < 0)
       return "Valid price is required";
+
+    const subcategories = getSubcategoriesByCategory(newP.category, products);
+    if (subcategories.length > 0 && !newP.subcategory.trim()) {
+      return "Subcategory is required for selected category";
+    }
+
     return "";
   };
 
@@ -244,6 +385,8 @@ export default function AdminProducts() {
       const payload = {
         ...newP,
         title: newP.title.trim(),
+        category: newP.category.trim(),
+        subcategory: newP.subcategory.trim(),
         tags: parseTags(newP.tagsText),
         price: Number(newP.price),
         // converts price/mrp/stock to numbers, defaults empty mrp/stock to 0
@@ -254,10 +397,15 @@ export default function AdminProducts() {
       // API call
       await createProduct(payload);
       setMsg("Product created");
+      const defaultCategory = categories[0] || "";
+      const defaultSubcategory =
+        getSubcategoriesByCategory(defaultCategory, products)[0] || "";
+
       setNewP({
         title: "",
         brand: "",
-        category: "General",
+        category: defaultCategory,
+        subcategory: defaultSubcategory,
         description: "",
         tagsText: "",
         price: "",
@@ -284,7 +432,8 @@ export default function AdminProducts() {
     setEditP({
       title: p.title || "",
       brand: p.brand || "",
-      category: p.category || "General",
+      category: p.category || categories[0] || "",
+      subcategory: p.subcategory || "",
       description: p.description || "",
       tagsText: toTagsText(p.tags),
       price: p.price ?? 0,
@@ -311,12 +460,23 @@ export default function AdminProducts() {
     if (editP.price === "" || Number(editP.price) < 0)
       return setError("Valid price is required");
 
+    //if the selected category has subcategories, the user must select one before saving.
+    const editSubcategoryOptions = getSubcategoriesByCategory(
+      editP.category,
+      products,
+    );
+    if (editSubcategoryOptions.length > 0 && !editP.subcategory.trim()) {
+      return setError("Subcategory is required for selected category");
+    }
+
     try {
       setError("");
       setMsg("");
       const payload = {
         ...editP,
         title: editP.title.trim(),
+        category: editP.category.trim(),
+        subcategory: editP.subcategory.trim(),
         tags: parseTags(editP.tagsText),
         price: Number(editP.price),
         mrp: editP.mrp === "" ? 0 : Number(editP.mrp),
@@ -355,8 +515,13 @@ export default function AdminProducts() {
     });
   };
 
+  // updates your filter state dynamically and also resets the subcategory filter when the category filter changes.
   const setFilter = (key, value) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
+    setFilters((prev) => {
+      const next = { ...prev, [key]: value };
+      if (key === "category") next.subcategory = "";
+      return next;
+    });
   };
 
   const clearFilters = () => {
@@ -377,7 +542,7 @@ export default function AdminProducts() {
             <input
               type="text"
               className="form-control"
-              placeholder="Search by title, brand, category, description, tags..."
+              placeholder="Search by title, brand, category, subcategory, description, tags..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
             />
@@ -439,6 +604,24 @@ export default function AdminProducts() {
                   {filterCategories.map((c) => (
                     <option key={c || "all-categories"} value={c}>
                       {c || "All Categories"}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="col-md-4">
+                <label className="form-label">Subcategory</label>
+                <select
+                  className="form-select"
+                  value={filters.subcategory}
+                  onChange={(e) => setFilter("subcategory", e.target.value)}
+                >
+                  {filterSubcategories.map((subcategory) => (
+                    <option
+                      key={subcategory || "all-subcategories"}
+                      value={subcategory}
+                    >
+                      {subcategory || "All Subcategories"}
                     </option>
                   ))}
                 </select>
@@ -568,12 +751,23 @@ export default function AdminProducts() {
                 </Field>
               </div>
 
-              <div className="col-md-6">
+              <div className="col-md-4">
                 <Field label="Category">
                   <select
                     className="form-select"
                     value={newP.category}
-                    onChange={(e) => setNewField("category", e.target.value)}
+                    onChange={(e) => {
+                      const nextCategory = e.target.value;
+                      const nextSubcategories = getSubcategoriesByCategory(
+                        nextCategory,
+                        products,
+                      );
+                      setNewP((prev) => ({
+                        ...prev,
+                        category: nextCategory,
+                        subcategory: nextSubcategories[0] || "",
+                      }));
+                    }}
                   >
                     {categories.map((c) => (
                       <option key={c} value={c}>
@@ -584,7 +778,24 @@ export default function AdminProducts() {
                 </Field>
               </div>
 
-              <div className="col-md-6">
+              <div className="col-md-4">
+                <Field label="Subcategory">
+                  <select
+                    className="form-select"
+                    value={newP.subcategory}
+                    onChange={(e) => setNewField("subcategory", e.target.value)}
+                  >
+                    <option value="">Select subcategory</option>
+                    {createSubcategories.map((subcategory) => (
+                      <option key={subcategory} value={subcategory}>
+                        {subcategory}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              </div>
+
+              <div className="col-md-4">
                 <Field label="Image URL">
                   <input
                     className="form-control"
@@ -718,7 +929,7 @@ export default function AdminProducts() {
                       <div className="fw-bold">{p.title}</div>
                       <div className="small text-secondary">
                         {p.brand ? `${p.brand} - ` : ""}
-                        {p.category || "General"} - Stock: {p.stock ?? 0}
+                        {getProductCategoryLabel(p)} - Stock: {p.stock ?? 0}
                       </div>
                       {Array.isArray(p.tags) && p.tags.length > 0 && (
                         <div className="small text-secondary">
@@ -775,14 +986,29 @@ export default function AdminProducts() {
                           </Field>
                         </div>
 
-                        <div className="col-md-6">
+                        <div className="col-md-4">
                           <Field label="Category">
                             <select
                               className="form-select"
                               value={editP.category}
-                              onChange={(e) =>
-                                setEditField("category", e.target.value)
-                              }
+                              onChange={(e) => {
+                                const nextCategory = e.target.value;
+                                const nextSubcategories =
+                                  getSubcategoriesByCategory(
+                                    nextCategory,
+                                    products,
+                                  );
+
+                                setEditP((prev) => ({
+                                  ...prev,
+                                  category: nextCategory,
+                                  subcategory: nextSubcategories.includes(
+                                    prev.subcategory,
+                                  )
+                                    ? prev.subcategory
+                                    : nextSubcategories[0] || "",
+                                }));
+                              }}
                             >
                               {categories.map((c) => (
                                 <option key={c} value={c}>
@@ -793,7 +1019,26 @@ export default function AdminProducts() {
                           </Field>
                         </div>
 
-                        <div className="col-md-6">
+                        <div className="col-md-4">
+                          <Field label="Subcategory">
+                            <select
+                              className="form-select"
+                              value={editP.subcategory}
+                              onChange={(e) =>
+                                setEditField("subcategory", e.target.value)
+                              }
+                            >
+                              <option value="">Select subcategory</option>
+                              {editSubcategories.map((subcategory) => (
+                                <option key={subcategory} value={subcategory}>
+                                  {subcategory}
+                                </option>
+                              ))}
+                            </select>
+                          </Field>
+                        </div>
+
+                        <div className="col-md-4">
                           <Field label="Image URL">
                             <input
                               className="form-control"

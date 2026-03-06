@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { fetchProductById } from "../../api/products.api";
 import { addToCart } from "../../api/cart.api";
+import { getProductCategoryLabel } from "../../utils/productCategory";
 
 export default function ProductDetails() {
   const { id } = useParams();
@@ -120,7 +121,7 @@ export default function ProductDetails() {
               {/* eg. Nike - Shoes */}
               <p className="text-secondary mb-2">
                 {p.brand ? `${p.brand} - ` : ""}
-                {p.category || "General"}
+                {getProductCategoryLabel(p)}
               </p>
 
               <div className="d-flex align-items-baseline gap-2 mb-2">

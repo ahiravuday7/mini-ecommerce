@@ -7,6 +7,7 @@ import {
   updateCartItem,
 } from "../../api/cart.api";
 import { useAuth } from "../../context/AuthContext";
+import { getProductCategoryLabel } from "../../utils/productCategory";
 
 export default function Cart() {
   const navigate = useNavigate();
@@ -203,7 +204,7 @@ export default function Cart() {
 
                           <p className="text-secondary small mb-2">
                             {p?.brand ? `${p.brand} - ` : ""}
-                            {p?.category || "General"}
+                            {getProductCategoryLabel(p)}
                           </p>
 
                           <div className="d-flex flex-wrap align-items-center justify-content-between gap-2">

@@ -14,7 +14,7 @@ const getMyCart = asyncHandler(async (req, res) => {
 
   const populated = await Cart.findById(cart._id).populate({
     path: "items.product",
-    select: "title price mrp image stock category brand",
+    select: "title price mrp image stock category subcategory brand",
   });
 
   res.json(populated);
@@ -76,7 +76,7 @@ const addToCart = asyncHandler(async (req, res) => {
 
   const populated = await Cart.findById(cart._id).populate({
     path: "items.product",
-    select: "title price mrp image stock category brand",
+    select: "title price mrp image stock category subcategory brand",
   });
 
   res.status(200).json(populated);
@@ -127,7 +127,7 @@ const updateCartItem = asyncHandler(async (req, res) => {
 
   const populated = await Cart.findById(cart._id).populate({
     path: "items.product",
-    select: "title price mrp image stock category brand",
+    select: "title price mrp image stock category subcategory brand",
   });
 
   res.json(populated);
@@ -154,7 +154,7 @@ const removeFromCart = asyncHandler(async (req, res) => {
 
   const populated = await Cart.findById(cart._id).populate({
     path: "items.product",
-    select: "title price mrp image stock category brand",
+    select: "title price mrp image stock category subcategory brand",
   });
 
   res.json(populated);

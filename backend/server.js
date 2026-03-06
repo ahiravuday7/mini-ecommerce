@@ -9,6 +9,7 @@ const connectDB = require("./config/db");
 const { notFound, errorHandler } = require("./middleware/error.middleware");
 
 const productRoutes = require("./routes/product.routes");
+const categoryRoutes = require("./routes/category.routes");
 const authRoutes = require("./routes/auth.routes");
 const accountRoutes = require("./routes/account.routes");
 const cartRoutes = require("./routes/cart.routes");
@@ -63,6 +64,7 @@ app.use("/api", apiLimiter);
 // Routes
 app.get("/", (req, res) => res.send("API running..."));
 app.use("/api/products", productRoutes);
+app.use("/api/categories", categoryRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/account", accountRoutes);
 app.use("/api/cart", cartRoutes);

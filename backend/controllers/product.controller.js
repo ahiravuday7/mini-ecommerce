@@ -1,4 +1,5 @@
 const Product = require("../models/Product");
+const Category = require("../models/Category");
 const asyncHandler = require("../utils/asyncHandler");
 
 // Converts user input into a safe string by escaping regex special characters so it can be safely used inside a MongoDB $regex search.
@@ -21,12 +22,96 @@ const sanitizeTags = (input) => {
   return [];
 };
 
+//This ensures category is always stored as a clean string.
+const normalizeCategory = (value, fallback = "General") => {
+  const trimmed = String(value || "").trim();
+  return trimmed || fallback;
+};
+//This makes subcategory clean.
+const normalizeSubcategory = (value) => String(value || "").trim();
+
+// This function checks whether the incoming category/subcategory combination is valid.
+const validateCategoryAndSubcategory = async (
+  categoryInput,
+  subcategoryInput,
+) => {
+  const normalizedCategory = normalizeCategory(categoryInput);
+  const normalizedSubcategory = normalizeSubcategory(subcategoryInput);
+
+  const categoryDoc = await Category.findOne({
+    isActive: true,
+    name: { $regex: `^${escapeRegex(normalizedCategory)}$`, $options: "i" },
+  })
+    .select("name subcategories")
+    .lean();
+
+  // Backward compatible mode: allow existing behavior when no categories are configured.
+  if (!categoryDoc) {
+    const hasActiveCategories = await Category.exists({ isActive: true });
+    if (!hasActiveCategories) {
+      return {
+        ok: true,
+        category: normalizedCategory,
+        subcategory: normalizedSubcategory,
+      };
+    }
+
+    return {
+      ok: false,
+      message: `category "${normalizedCategory}" is not configured`,
+    };
+  }
+
+  // This creates a safe cleaned subcategory list from DB.
+  const allowedSubcategories = (
+    Array.isArray(categoryDoc.subcategories) ? categoryDoc.subcategories : []
+  )
+    .map((sub) => String(sub || "").trim())
+    .filter(Boolean);
+
+  //If category has no subcategories configured
+  if (allowedSubcategories.length === 0) {
+    return {
+      ok: true,
+      category: categoryDoc.name,
+      subcategory: normalizedSubcategory,
+    };
+  }
+
+  // If category has subcategories, subcategory becomes required
+  if (!normalizedSubcategory) {
+    return {
+      ok: false,
+      message: `subcategory is required for category "${categoryDoc.name}"`,
+    };
+  }
+
+  //Check whether given subcategory is valid
+  const matchedSubcategory = allowedSubcategories.find(
+    (sub) => sub.toLowerCase() === normalizedSubcategory.toLowerCase(),
+  );
+
+  if (!matchedSubcategory) {
+    return {
+      ok: false,
+      message: `subcategory "${normalizedSubcategory}" is not valid for category "${categoryDoc.name}"`,
+    };
+  }
+
+  return {
+    ok: true,
+    category: categoryDoc.name,
+    subcategory: matchedSubcategory,
+  };
+};
+
 // GET /api/products
 const getProducts = asyncHandler(async (req, res) => {
-  const { q, category } = req.query; //eg. q = "phone" (the search query) category = "electronics"
+  const { q, category, subcategory } = req.query; //eg. q = "phone" (the search query) category = "electronics"
 
   const filter = {};
-  if (category) filter.category = category;
+  if (category) filter.category = String(category).trim();
+  if (subcategory) filter.subcategory = String(subcategory).trim();
 
   // Search by title, brand, category, description, tags
   const qTrim = (q || "").trim(); // trim query parameters to avoid unnecessary database queries caused by whitespace-only input. eg. qTrim = "phone", " " → "" (skip search)
@@ -37,6 +122,7 @@ const getProducts = asyncHandler(async (req, res) => {
       { title: { $regex: safeRegex, $options: "i" } }, //$regex: q search term anywhere inside the product's title, $options: "i" Makes the search case-insensitive
       { brand: { $regex: safeRegex, $options: "i" } }, //$regex: q search term anywhere inside the product's brand, $options: "i" Makes the search case-insensitive
       { category: { $regex: safeRegex, $options: "i" } },
+      { subcategory: { $regex: safeRegex, $options: "i" } },
       { description: { $regex: safeRegex, $options: "i" } },
       { tags: { $regex: safeRegex, $options: "i" } },
     ];
@@ -68,6 +154,7 @@ const createProduct = asyncHandler(async (req, res) => {
     title,
     brand = "",
     category = "General",
+    subcategory = "",
     description = "",
     tags = [],
     price,
@@ -92,11 +179,23 @@ const createProduct = asyncHandler(async (req, res) => {
     throw new Error("price must be a valid number");
   }
 
+  // New validation before product creation
+  const hierarchyValidation = await validateCategoryAndSubcategory(
+    category,
+    subcategory,
+  );
+
+  if (!hierarchyValidation.ok) {
+    res.status(400);
+    throw new Error(hierarchyValidation.message);
+  }
+
   // Create product & insert into MongoDB
   const product = await Product.create({
     title: title.trim(),
     brand,
-    category,
+    category: hierarchyValidation.category,
+    subcategory: hierarchyValidation.subcategory,
     description,
     tags: sanitizeTags(tags),
     price: Number(price),
@@ -119,6 +218,8 @@ const updateProduct = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error("Product not found");
   }
+  const originalCategory = normalizeCategory(product.category);
+  const originalSubcategory = normalizeSubcategory(product.subcategory);
 
   // Identify numeric fields using Set
   const numericFields = new Set([
@@ -134,6 +235,7 @@ const updateProduct = asyncHandler(async (req, res) => {
     "title",
     "brand",
     "category",
+    "subcategory",
     "description",
     "tags",
     "price",
@@ -143,6 +245,9 @@ const updateProduct = asyncHandler(async (req, res) => {
     "rating",
     "numReviews",
   ];
+
+  const hierarchyFieldsUpdated =
+    req.body.category !== undefined || req.body.subcategory !== undefined;
 
   // Validate + update
   // Update only fields present in request body Missing fields will NOT be overwritten.
@@ -187,6 +292,39 @@ const updateProduct = asyncHandler(async (req, res) => {
       }
     }
   });
+
+  //New hierarchy validation after update loop
+  //category/subcategory was updated
+  if (hierarchyFieldsUpdated) {
+    const nextCategory = normalizeCategory(product.category);
+    const nextSubcategory = normalizeSubcategory(product.subcategory);
+    const categoryChanged =
+      nextCategory !== originalCategory ||
+      nextSubcategory !== originalSubcategory;
+
+    //So if admin updates hierarchy, new values must be valid.
+    if (categoryChanged) {
+      const hierarchyValidation = await validateCategoryAndSubcategory(
+        nextCategory,
+        nextSubcategory,
+      );
+
+      if (!hierarchyValidation.ok) {
+        res.status(400);
+        throw new Error(hierarchyValidation.message);
+      }
+
+      product.category = hierarchyValidation.category;
+      product.subcategory = hierarchyValidation.subcategory;
+    } else {
+      product.category = nextCategory;
+      product.subcategory = nextSubcategory;
+    }
+  } else {
+    // This keeps stored values normalized even when only other fields are updated.
+    product.category = normalizeCategory(product.category);
+    product.subcategory = normalizeSubcategory(product.subcategory);
+  }
 
   const updatedProduct = await product.save();
   res.json(updatedProduct);

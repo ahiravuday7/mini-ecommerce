@@ -14,7 +14,7 @@ const getDashboardAnalytics = asyncHandler(async (req, res) => {
     User.countDocuments({}),
     Order.countDocuments({}),
     Product.find({})
-      .select("title image stock category brand createdAt")
+      .select("title image stock category subcategory brand createdAt")
       .lean(),
   ]);
 

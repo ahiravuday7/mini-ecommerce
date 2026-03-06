@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { fetchProducts } from "../../api/products.api";
 import ProductCard from "../../components/ProductCard";
 import Pagination from "../../components/Pagination";
+import { useCategories } from "../../context/CategoriesContext";
 
 const PRODUCTS_PER_PAGE = 6;
 
@@ -10,6 +11,7 @@ const PRODUCTS_PER_PAGE = 6;
 const emptyFilters = {
   brand: "",
   category: "",
+  subcategory: "",
   minPrice: "",
   maxPrice: "",
   minDiscount: "",
@@ -26,9 +28,11 @@ const getDiscountPercent = (product) => {
 };
 
 export default function Products() {
+  const { categories: categoryTree } = useCategories();
   const [searchParams] = useSearchParams();
   const qFromUrl = (searchParams.get("q") || "").trim(); //reads query parameters from URL
   const categoryFromUrl = (searchParams.get("category") || "").trim();
+  const subcategoryFromUrl = (searchParams.get("subcategory") || "").trim();
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -38,6 +42,7 @@ export default function Products() {
   const [filters, setFilters] = useState({
     ...emptyFilters,
     category: categoryFromUrl,
+    subcategory: subcategoryFromUrl,
   });
 
   // Extract all unique brands from products and use them in filter dropdown
@@ -48,13 +53,70 @@ export default function Products() {
     return ["", ...Array.from(set).sort((a, b) => a.localeCompare(b))];
   }, [products]);
 
-  //Extract all categories from products and use them in filter dropdown
+  // lookup map of categories → subcategories using useMemo so it recalculates only when categoryTree changes.
+  const subcategoriesByCategory = useMemo(() => {
+    const map = new Map();
+
+    (Array.isArray(categoryTree) ? categoryTree : []).forEach((category) => {
+      const categoryName = String(category?.name || "").trim();
+      if (!categoryName) return;
+
+      const subcategories = (
+        Array.isArray(category?.subcategories) ? category.subcategories : []
+      )
+        .map((sub) => String(sub || "").trim())
+        .filter(Boolean);
+
+      map.set(categoryName, subcategories);
+    });
+
+    return map;
+  }, [categoryTree]);
+
+  //list of all available categories that will be shown in the Category filter dropdown.
+  // It merges categories from two sources:Categories coming from the Category API (categoryTree),Categories coming from Products data
   const categories = useMemo(() => {
-    const set = new Set(
-      products.map((p) => (p.category || "").trim()).filter(Boolean),
-    );
-    return ["", ...Array.from(set)];
-  }, [products]);
+    const set = new Set();
+
+    subcategoriesByCategory.forEach((_, categoryName) => {
+      set.add(categoryName);
+    });
+
+    products.forEach((p) => {
+      const category = (p.category || "").trim();
+      if (category) set.add(category);
+    });
+
+    return ["", ...Array.from(set).sort((a, b) => a.localeCompare(b))];
+  }, [products, subcategoriesByCategory]);
+
+  // subcategory dropdown options based on the selected category.
+  // if a category is selected -> show only subcategories for that category,if no category is selected -> show all subcategories,remove duplicates,sort them alphabetically,add an empty option for “All Subcategories”
+  const subcategories = useMemo(() => {
+    const set = new Set();
+
+    if (filters.category) {
+      (subcategoriesByCategory.get(filters.category) || []).forEach((sub) =>
+        set.add(sub),
+      );
+      products.forEach((p) => {
+        const category = (p.category || "").trim();
+        const subcategory = (p.subcategory || "").trim();
+        if (category === filters.category && subcategory) set.add(subcategory);
+      });
+    } else {
+      subcategoriesByCategory.forEach((subcategoryList) => {
+        subcategoryList.forEach((subcategory) => set.add(subcategory));
+      });
+
+      products.forEach((p) => {
+        const subcategory = (p.subcategory || "").trim();
+        if (subcategory) set.add(subcategory);
+      });
+    }
+
+    return ["", ...Array.from(set).sort((a, b) => a.localeCompare(b))];
+  }, [products, filters.category, subcategoriesByCategory]);
 
   const filteredProducts = useMemo(() => {
     const minPrice = filters.minPrice === "" ? null : Number(filters.minPrice);
@@ -68,12 +130,15 @@ export default function Products() {
     const result = products.filter((p) => {
       const brand = (p.brand || "").trim();
       const category = (p.category || "").trim();
+      const subcategory = (p.subcategory || "").trim();
       const price = Number(p.price || 0);
       const rating = Number(p.rating || 0);
       const discount = getDiscountPercent(p);
 
       if (filters.brand && brand !== filters.brand) return false; //Brand filter
       if (filters.category && category !== filters.category) return false; //Category filter
+      if (filters.subcategory && subcategory !== filters.subcategory)
+        return false; //Subcategory filter
       if (minPrice !== null && price < minPrice) return false; //Min price
       if (maxPrice !== null && price > maxPrice) return false; //Max price
       if (minDiscount !== null && discount < minDiscount) return false; //Min discount
@@ -130,10 +195,14 @@ export default function Products() {
     }
   };
 
-  // Whenever category in URL changes -> update filter state
+  // Whenever category or subcategory in URL changes -> update filter state
   useEffect(() => {
-    setFilters((prev) => ({ ...prev, category: categoryFromUrl }));
-  }, [categoryFromUrl]);
+    setFilters((prev) => ({
+      ...prev,
+      category: categoryFromUrl,
+      subcategory: subcategoryFromUrl,
+    }));
+  }, [categoryFromUrl, subcategoryFromUrl]);
 
   //So when user applies filters, they go back to page 1 automatically
   useEffect(() => {
@@ -153,11 +222,15 @@ export default function Products() {
     }, 300);
 
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qFromUrl]);
 
+  // Update a filter value. If the category changes, reset the subcategory to avoid invalid selections.
   const setFilter = (key, value) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
+    setFilters((prev) => {
+      const next = { ...prev, [key]: value };
+      if (key === "category") next.subcategory = "";
+      return next;
+    });
   };
 
   const clearFilters = () => {
@@ -226,6 +299,24 @@ export default function Products() {
                   {categories.map((c) => (
                     <option key={c || "all-categories"} value={c}>
                       {c || "All Categories"}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="col-md-4">
+                <label className="form-label">Subcategory</label>
+                <select
+                  className="form-select"
+                  value={filters.subcategory}
+                  onChange={(e) => setFilter("subcategory", e.target.value)}
+                >
+                  {subcategories.map((subcategory) => (
+                    <option
+                      key={subcategory || "all-subcategories"}
+                      value={subcategory}
+                    >
+                      {subcategory || "All Subcategories"}
                     </option>
                   ))}
                 </select>
