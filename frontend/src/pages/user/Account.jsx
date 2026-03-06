@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { getMyAccount } from "../../api/account.api";
+import { deleteMyAccount, getMyAccount } from "../../api/account.api";
 import AccountProfileForm from "../../components/user/AccountProfileForm";
 import AccountShippingForm from "../../components/user/AccountShippingForm";
 import { useAuth } from "../../context/AuthContext";
@@ -12,6 +12,10 @@ export default function Account() {
   const [accountUser, setAccountUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  // delete ac
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   const loadAccount = async () => {
     try {
@@ -46,6 +50,33 @@ export default function Account() {
       loadAccount();
     }
   }, [booting, user?._id]);
+
+  // delete account
+  const onDeleteAccount = async () => {
+    const password = deletePassword.trim();
+    if (!password) {
+      setDeleteError("Please enter your current password");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Delete your account permanently? This action cannot be undone.",
+    );
+    if (!confirmed) return;
+
+    try {
+      setDeleteLoading(true);
+      setDeleteError("");
+      await deleteMyAccount({ currentPassword: password });
+      setAccountUser(null);
+      updateUser(null);
+      navigate("/login", { replace: true });
+    } catch (e) {
+      setDeleteError(e?.response?.data?.message || "Failed to delete account");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
   if (booting || loading) {
     return (
@@ -88,6 +119,42 @@ export default function Account() {
             accountUser={accountUser}
             onAccountUpdated={handleAccountUpdated}
           />
+        </div>
+        <div className="col-12">
+          <div className="card border-danger-subtle shadow-sm">
+            <div className="card-body">
+              <h5 className="text-danger mb-1">Delete Account</h5>
+              <p className="text-secondary mb-3">
+                Enter your current password to permanently delete your account.
+              </p>
+              {deleteError && (
+                <div className="alert alert-danger">{deleteError}</div>
+              )}
+              <div className="row g-2 align-items-end">
+                <div className="col-12 col-md-6">
+                  <label className="form-label">Current Password</label>
+                  <input
+                    type="password"
+                    className="form-control"
+                    value={deletePassword}
+                    onChange={(e) => setDeletePassword(e.target.value)}
+                    placeholder="Enter current password"
+                    autoComplete="current-password"
+                  />
+                </div>
+                <div className="col-12 col-md-auto">
+                  <button
+                    type="button"
+                    className="btn btn-danger"
+                    onClick={onDeleteAccount}
+                    disabled={deleteLoading}
+                  >
+                    {deleteLoading ? "Deleting..." : "Delete Account"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

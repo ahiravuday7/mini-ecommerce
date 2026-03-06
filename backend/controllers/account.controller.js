@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const Cart = require("../models/Cart");
 const asyncHandler = require("../utils/asyncHandler");
 const { verifyIndianPincode } = require("../utils/pincodeValidator");
 
@@ -15,6 +16,17 @@ const trimIfString = (value) =>
 const normalizeEmail = (value) => {
   if (typeof value !== "string") return value;
   return value.trim().toLowerCase();
+};
+
+// removes the JWT authentication cookie from the browser.So effectively:User becomes logged out immediately.
+const clearAuthCookie = (res) => {
+  const isProd = process.env.NODE_ENV === "production";
+  res.cookie("jwt", "", {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? "none" : "lax",
+    expires: new Date(0),
+  });
 };
 
 // Filter and format user data before sending it to frontend
@@ -58,9 +70,7 @@ const updateMyProfile = asyncHandler(async (req, res) => {
     "phone",
     "newPassword",
     "confirmNewPassword",
-  ].some(
-    (field) => req.body[field] !== undefined,
-  );
+  ].some((field) => req.body[field] !== undefined);
 
   // If no field:
   if (!hasUpdateField) {
@@ -75,13 +85,16 @@ const updateMyProfile = asyncHandler(async (req, res) => {
   const incomingPhone =
     req.body.phone !== undefined ? trimIfString(req.body.phone) : undefined;
   const incomingNewPassword =
-    req.body.newPassword !== undefined ? trimIfString(req.body.newPassword) : undefined;
+    req.body.newPassword !== undefined
+      ? trimIfString(req.body.newPassword)
+      : undefined;
   const incomingConfirmNewPassword =
     req.body.confirmNewPassword !== undefined
       ? trimIfString(req.body.confirmNewPassword)
       : undefined;
   const passwordChangeRequested =
-    req.body.newPassword !== undefined || req.body.confirmNewPassword !== undefined;
+    req.body.newPassword !== undefined ||
+    req.body.confirmNewPassword !== undefined;
 
   const currentName = trimIfString(user.name || "");
   const currentEmail = normalizeEmail(user.email || "");
@@ -112,7 +125,12 @@ const updateMyProfile = asyncHandler(async (req, res) => {
   }
 
   // Sensitive updates require re-authentication
-  if (nameWillChange || emailWillChange || phoneWillChange || passwordChangeRequested) {
+  if (
+    nameWillChange ||
+    emailWillChange ||
+    phoneWillChange ||
+    passwordChangeRequested
+  ) {
     const currentPassword = trimIfString(req.body.currentPassword);
     if (!currentPassword) {
       res.status(400);
@@ -288,8 +306,48 @@ const updateMyShippingAddress = asyncHandler(async (req, res) => {
   res.json({ user: mapUserAccount(updatedUser) });
 });
 
+// DELETE /api/account
+// body: { currentPassword }
+const deleteMyAccount = asyncHandler(async (req, res) => {
+  const currentPassword = trimIfString(req.body?.currentPassword);
+  if (!currentPassword) {
+    res.status(400);
+    throw new Error("Current password is required");
+  }
+
+  const user = await User.findById(req.user._id);
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  const isValidPassword = await user.matchPassword(currentPassword);
+  if (!isValidPassword) {
+    res.status(401);
+    throw new Error("Current password is incorrect");
+  }
+
+  await Cart.deleteOne({ user: user._id });
+
+  user.isDeleted = true;
+  user.deletedAt = new Date();
+  user.isBlocked = true;
+  user.blockedAt = new Date();
+  user.name = "Deleted User";
+  user.email = undefined;
+  user.phone = undefined;
+  user.shippingAddress = {};
+
+  await user.save();
+
+  clearAuthCookie(res);
+
+  res.json({ message: "Account deleted successfully" });
+});
+
 module.exports = {
   getMyAccount,
   updateMyProfile,
   updateMyShippingAddress,
+  deleteMyAccount,
 };

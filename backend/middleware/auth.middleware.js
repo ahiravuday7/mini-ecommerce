@@ -14,6 +14,17 @@ const protect = async (req, res, next) => {
       if (!req.user) {
         return res.status(401).json({ message: "Not authorized" });
       }
+      if (req.user.isDeleted) {
+        res.cookie("jwt", "", {
+          httpOnly: true,
+          expires: new Date(0),
+        });
+        return res
+          .status(403)
+          .json({
+            message: "This account has been deleted.",
+          });
+      }
       if (req.user.isBlocked) {
         res.cookie("jwt", "", {
           httpOnly: true,

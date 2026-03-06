@@ -6,10 +6,12 @@ const {
   getMyAccount,
   updateMyProfile,
   updateMyShippingAddress,
+  deleteMyAccount,
 } = require("../controllers/account.controller");
 
 router.get("/", protect, getMyAccount);
 router.put("/profile", protect, updateMyProfile);
 router.put("/shipping-address", protect, updateMyShippingAddress);
+router.delete("/", protect, deleteMyAccount);
 
 module.exports = router;

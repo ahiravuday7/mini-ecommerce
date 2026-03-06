@@ -104,6 +104,11 @@ const loginUser = asyncHandler(async (req, res) => {
     isEmail ? { email: normalizedIdentifier } : { phone: identifier },
   );
 
+  if (user?.isDeleted) {
+    res.status(403);
+    throw new Error("This account has been deleted.");
+  }
+
   if (user?.isBlocked) {
     res.status(403);
     throw new Error("Your account is blocked. Please contact support.");

@@ -26,6 +26,8 @@ const userSchema = new mongoose.Schema(
     isAdmin: { type: Boolean, default: false },
     isBlocked: { type: Boolean, default: false, index: true },
     blockedAt: { type: Date, default: null },
+    isDeleted: { type: Boolean, default: false, index: true },
+    deletedAt: { type: Date, default: null },
   },
   { timestamps: true },
 );
