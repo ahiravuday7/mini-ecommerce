@@ -917,11 +917,13 @@ export default function AdminProducts() {
                   <div className="row g-3 align-items-center">
                     <div className="col-auto">
                       <img
-                        src={
-                          p.image || "https://via.placeholder.com/100?text=Img"
-                        }
+                        src={p.image || "/BrokenImage.png"}
                         alt={p.title}
                         className="rounded-3 admin-product-image"
+                        onError={(event) => {
+                          event.currentTarget.onerror = null;
+                          event.currentTarget.src = "/BrokenImage.png";
+                        }}
                       />
                     </div>
 

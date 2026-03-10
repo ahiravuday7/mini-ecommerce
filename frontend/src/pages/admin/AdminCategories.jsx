@@ -330,20 +330,24 @@ export default function AdminCategories() {
           {categories.map((category) => (
             <div key={category._id} className="card border-0 shadow-sm">
               <div className="card-body">
-                <div className="d-flex flex-wrap align-items-start justify-content-between gap-3">
-                  <div>
+                <div className="d-flex flex-column flex-md-row align-items-md-start justify-content-between gap-3 admin-category-item">
+                  <div className="admin-category-content min-w-0 flex-grow-1">
                     <h5 className="mb-1">{category.name}</h5>
-                    <div className="small text-secondary mb-2">
+                    <div
+                      className="small text-secondary mb-2 admin-category-image-link"
+                      title={category.image || "No image"}
+                    >
                       {category.image || "No image"}
                     </div>
-                    <div className="d-flex flex-wrap gap-2">
+                    <div className="d-flex gap-2 admin-category-tags">
                       {(Array.isArray(category.subcategories)
                         ? category.subcategories
                         : []
                       ).map((subcategory) => (
                         <span
                           key={`${category._id}-${subcategory}`}
-                          className="badge text-bg-light border"
+                          className="badge text-bg-light border admin-category-tag"
+                          title={subcategory}
                         >
                           {subcategory}
                         </span>
@@ -356,7 +360,7 @@ export default function AdminCategories() {
                     </div>
                   </div>
 
-                  <div className="d-flex align-items-center gap-2">
+                  <div className="d-flex align-items-center gap-2 ms-md-3 flex-shrink-0 admin-category-actions">
                     <span
                       className={`badge ${
                         category.isActive !== false

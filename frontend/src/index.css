@@ -240,6 +240,36 @@ body {
   background: #f8f9fa;
 }
 
+/* admin categories list */
+.admin-category-content {
+  min-width: 0;
+}
+
+.admin-category-image-link {
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-category-tags {
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+.admin-category-tag {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 767.98px) {
+  .admin-category-actions {
+    justify-content: flex-start;
+  }
+}
+
 /* sticky summary cart, checkout, order details */
 .summary-sticky {
   position: sticky;
