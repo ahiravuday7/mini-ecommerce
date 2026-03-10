@@ -28,13 +28,17 @@ export default function HeroCarousel() {
     if (!imgEl || !bgRef.current) return;
 
     const apply = () => {
+      const isDarkTheme =
+        document.documentElement.getAttribute("data-theme") === "dark";
+      const gradientEnd = isDarkTheme ? "#0b1220" : "#ffffff";
+
       try {
         const [r, g, b] = colorThiefRef.current.getColor(imgEl);
-        bgRef.current.style.background = `linear-gradient(to bottom, rgba(${r}, ${g}, ${b}, 1), #ffffff)`;
+        bgRef.current.style.background = `linear-gradient(to bottom, rgba(${r}, ${g}, ${b}, 1), ${gradientEnd})`;
       } catch (e) {
         // fallback gradient if image blocks canvas (CORS) or any error
         bgRef.current.style.background =
-          "linear-gradient(to bottom, #1f2a44, #ffffff)";
+          `linear-gradient(to bottom, #1f2a44, ${gradientEnd})`;
       }
     };
 
@@ -58,6 +62,22 @@ export default function HeroCarousel() {
 
     carouselEl.addEventListener("slid.bs.carousel", onSlid);
     return () => carouselEl.removeEventListener("slid.bs.carousel", onSlid);
+  }, []);
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      const activeImg = carouselRef.current?.querySelector(
+        ".carousel-item.active img",
+      );
+      updateGradientFromImage(activeImg);
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
+
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {

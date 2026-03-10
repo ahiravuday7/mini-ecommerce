@@ -20,7 +20,7 @@ const categoryImageMap = {
 
 // for redirect category clicked
 const getCategoryImage = (name, fallback) =>
-  categoryImageMap[name] || fallback || "/vite.svg";
+  categoryImageMap[name] || fallback || "/BrokenImage.png";
 
 export default function Home() {
   const navigate = useNavigate();

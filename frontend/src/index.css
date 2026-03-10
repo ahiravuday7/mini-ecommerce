@@ -2,11 +2,46 @@
   --bs-primary: #0d6efd;
   --bs-dark: #212529;
   --bs-body-bg: #ffffff;
+  --bs-body-color: #212529;
+  --bs-secondary-color: #6c757d;
+  --bs-tertiary-color: #6c757d;
+  --bs-emphasis-color: #111827;
+  --bs-border-color: rgba(0, 0, 0, 0.12);
+  --app-bg: #f2f4f7;
+  --app-text: #17212f;
+  --app-surface: #ffffff;
+  --app-border: rgba(0, 0, 0, 0.12);
+  --app-muted: #6b7280;
+}
+
+[data-theme="dark"] {
+  --bs-body-bg: #0b1220;
+  --bs-body-color: #e5e7eb;
+  --bs-secondary-color: #94a3b8;
+  --bs-tertiary-color: #94a3b8;
+  --bs-emphasis-color: #f8fafc;
+  --bs-border-color: #2b364a;
+  --app-bg: #0b1220;
+  --app-text: #e5e7eb;
+  --app-surface: #111827;
+  --app-border: #2b364a;
+  --app-muted: #94a3b8;
 }
 
 body {
   margin: 0;
-  /* background: var(--brand-bg); */
+  background: var(--app-bg);
+  color: var(--app-text);
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+.app-navbar {
+  background: var(--app-surface) !important;
+  border-color: var(--app-border) !important;
+}
+
+.navbar-brand-link {
+  color: var(--app-text) !important;
 }
 
 /* for Gradient carousel */
@@ -21,6 +56,97 @@ body {
   min-height: 100vh;
 }
 
+[data-theme="dark"] .text-dark {
+  color: var(--app-text) !important;
+}
+
+[data-theme="dark"] .text-secondary {
+  color: var(--app-muted) !important;
+}
+
+[data-theme="dark"] .text-muted {
+  color: var(--app-muted) !important;
+}
+
+[data-theme="dark"] .bg-white {
+  background-color: var(--app-surface) !important;
+}
+
+[data-theme="dark"] .card {
+  background-color: var(--app-surface);
+  color: var(--app-text);
+  border-color: var(--app-border);
+}
+
+[data-theme="dark"] .bg-light {
+  background-color: #0f172a !important;
+  color: var(--app-text) !important;
+}
+
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+  background-color: #0f172a;
+  color: var(--app-text);
+  border-color: var(--app-border);
+}
+
+[data-theme="dark"] .form-control::placeholder {
+  color: var(--app-muted);
+}
+
+[data-theme="dark"] .dropdown-menu {
+  background-color: #0f172a;
+  border-color: var(--app-border);
+}
+
+[data-theme="dark"] .dropdown-item {
+  color: var(--app-text);
+}
+
+[data-theme="dark"] .dropdown-item:hover {
+  background-color: #1f2937;
+}
+
+[data-theme="dark"] .offcanvas,
+[data-theme="dark"] .offcanvas-header,
+[data-theme="dark"] .offcanvas-body {
+  background-color: var(--app-surface) !important;
+  color: var(--app-text) !important;
+  border-color: var(--app-border) !important;
+}
+
+[data-theme="dark"] .btn-close {
+  filter: invert(1) grayscale(100%) brightness(180%);
+}
+
+[data-theme="dark"] .table {
+  --bs-table-bg: transparent;
+  --bs-table-color: var(--app-text);
+  --bs-table-border-color: var(--app-border);
+}
+
+[data-theme="dark"] .table > :not(caption) > * > * {
+  color: var(--app-text);
+  border-bottom-color: var(--app-border);
+}
+
+[data-theme="dark"] .table-light,
+[data-theme="dark"] .table-light > tr > th,
+[data-theme="dark"] .table-light > tr > td,
+[data-theme="dark"] .table-light th,
+[data-theme="dark"] .table-light td {
+  background-color: #172033 !important;
+  color: var(--app-text) !important;
+  border-color: var(--app-border) !important;
+}
+
+[data-theme="dark"] .table-bordered > :not(caption) > * {
+  border-color: var(--app-border) !important;
+}
+
+[data-theme="dark"] .user-menu-link:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
 /* for ligin and register page */
 .login-wrapper {
   width: 100%;
@@ -142,5 +268,7 @@ body {
 .user-menu-link:hover {
   background: rgba(0, 0, 0, 0.06);
 }
+
+
 
 

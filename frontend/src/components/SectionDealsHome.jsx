@@ -88,6 +88,11 @@ const getProductKey = (product) =>
       `${product?.title || "item"}-${product?.brand || ""}-${product?.price || ""}`,
   );
 
+const getProductImage = (image) => {
+  const value = String(image || "").trim();
+  return value || "/BrokenImage.png";
+};
+
 const DealCard = ({ product }) => {
   const discount = getDiscountPercent(product);
   const mrp = Number(product?.mrp || 0);
@@ -101,10 +106,14 @@ const DealCard = ({ product }) => {
       >
         <div className="deal-card-img-wrap bg-light">
           <img
-            src={product?.image || "/vite.svg"}
+            src={getProductImage(product?.image)}
             alt={product?.title || "Product"}
             className="deal-card-img"
             loading="lazy"
+            onError={(event) => {
+              event.currentTarget.onerror = null;
+              event.currentTarget.src = "/BrokenImage.png";
+            }}
           />
         </div>
 

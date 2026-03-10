@@ -12,6 +12,13 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const [theme, setTheme] = useState(() => {
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme === "dark" || savedTheme === "light") return savedTheme;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
+  });
   const isUserOnly = user && !user.isAdmin;
   const isShopperView = !user || !user.isAdmin;
   const isAuthPage =
@@ -40,13 +47,18 @@ export default function Navbar() {
     setShowManagementMenu(false);
   }, [location.pathname, location.search]);
 
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
   return (
-    <header className="bg-white border-bottom sticky-top shadow-sm">
+    <header className="app-navbar border-bottom sticky-top shadow-sm">
       <div className="container py-3">
         <div className="d-flex flex-column flex-lg-row align-items-lg-center gap-3">
           <Link
             to={brandPath}
-            className="text-decoration-none fs-4 fw-bold text-dark"
+            className="text-decoration-none fs-4 fw-bold navbar-brand-link"
           >
             MiniStore
           </Link>
@@ -74,6 +86,22 @@ export default function Navbar() {
           </nav>
 
           <nav className="d-flex align-items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              className="btn btn-outline-secondary btn-sm"
+              onClick={() =>
+                setTheme((prevTheme) =>
+                  prevTheme === "dark" ? "light" : "dark",
+                )
+              }
+              aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+              title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+            >
+              <i
+                className={`bi ${theme === "dark" ? "bi-sun-fill" : "bi-moon-stars-fill"}`}
+              />
+            </button>
+
             {user ? (
               <>
                 <span className="small text-secondary">
