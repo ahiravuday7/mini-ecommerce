@@ -118,7 +118,7 @@ const placeOrder = asyncHandler(async (req, res) => {
   itemsPrice = round2(itemsPrice);
 
   // Simple pricing rules (you can adjust)
-  const shippingPrice = itemsPrice >= 999 ? 0 : 50; // Free shipping above ₹999
+  const shippingPrice = itemsPrice >= 999 ? 0 : 79; // Free shipping above ₹999
   const taxPrice = round2(itemsPrice * 0.0); // Currently 0%
   const totalPrice = round2(itemsPrice + shippingPrice + taxPrice); // Total
 

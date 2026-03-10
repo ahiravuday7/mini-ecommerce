@@ -40,7 +40,7 @@ const Footer = () => {
               <h6 className="fw-semibold">Shop</h6>
               <ul className="list-unstyled footer-links">
                 <li>
-                  <Link to="/">All Products</Link>
+                  <Link to="/products">All Products</Link>
                 </li>
                 <li>
                   <Link to="/cart">Cart</Link>
@@ -73,10 +73,10 @@ const Footer = () => {
                   <Link to="/faqs">FAQs</Link>
                 </li>
                 <li>
-                  <a href="#">Shipping</a>
+                  <a href="/Shipping">Shipping</a>
                 </li>
                 <li>
-                  <a href="#">Returns</a>
+                  <a href="/Returns">Returns</a>
                 </li>
                 <li>
                   <Link to="/privacy-policy">Privacy Policy</Link>

@@ -50,7 +50,7 @@ export default function Checkout() {
       (sum, it) => sum + (it.priceAtAdd || it.product?.price || 0) * it.qty,
       0,
     );
-    const shipping = itemsPrice >= 999 ? 0 : itemsPrice > 0 ? 50 : 0;
+    const shipping = itemsPrice >= 999 ? 0 : itemsPrice > 0 ? 79 : 0;
     const tax = 0;
     const total = itemsPrice + shipping + tax;
     return { itemsPrice, shipping, tax, total };

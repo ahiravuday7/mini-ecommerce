@@ -16,6 +16,8 @@ import About from "./pages/About";
 import Careers from "./pages/Careers";
 import Contact from "./pages/Contact";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Returns from "./pages/Returns";
+import Shipping from "./pages/Shipping";
 import ForgotPassword from "./pages/ForgotPassword";
 import FAQs from "./pages/user/FAQs";
 import AdminFaqs from "./pages/admin/AdminFaqs";
@@ -119,6 +121,8 @@ export default function App() {
         <Route path="/careers" element={<Careers />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/Returns" element={<Returns />} />
+        <Route path="/Shipping" element={<Shipping />} />
         <Route
           path="/faqs"
           element={
