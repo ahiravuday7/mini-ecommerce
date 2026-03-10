@@ -86,22 +86,6 @@ export default function Navbar() {
           </nav>
 
           <nav className="d-flex align-items-center gap-2 flex-wrap">
-            <button
-              type="button"
-              className="btn btn-outline-secondary btn-sm"
-              onClick={() =>
-                setTheme((prevTheme) =>
-                  prevTheme === "dark" ? "light" : "dark",
-                )
-              }
-              aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-              title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-            >
-              <i
-                className={`bi ${theme === "dark" ? "bi-sun-fill" : "bi-moon-stars-fill"}`}
-              />
-            </button>
-
             {user ? (
               <>
                 <span className="small text-secondary">
@@ -171,6 +155,22 @@ export default function Navbar() {
                     </div>
                   </>
                 )}
+
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary btn-sm"
+                  onClick={() =>
+                    setTheme((prevTheme) =>
+                      prevTheme === "dark" ? "light" : "dark",
+                    )
+                  }
+                  aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+                  title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+                >
+                  <i
+                    className={`bi ${theme === "dark" ? "bi-sun-fill" : "bi-moon-stars-fill"}`}
+                  />
+                </button>
 
                 <button
                   onClick={onLogout}
