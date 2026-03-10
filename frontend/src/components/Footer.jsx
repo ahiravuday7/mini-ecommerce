@@ -1,7 +1,10 @@
 import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import "./footer.css";
 
 const Footer = () => {
+  const { user } = useAuth();
+  const isAdmin = Boolean(user?.isAdmin);
   const year = new Date().getFullYear();
 
   return (
@@ -40,7 +43,9 @@ const Footer = () => {
               <h6 className="fw-semibold">Shop</h6>
               <ul className="list-unstyled footer-links">
                 <li>
-                  <Link to="/products">All Products</Link>
+                  <Link to={isAdmin ? "/admin/products" : "/products"}>
+                    All Products
+                  </Link>
                 </li>
                 <li>
                   <Link to="/cart">Cart</Link>
@@ -70,7 +75,7 @@ const Footer = () => {
               <h6 className="fw-semibold">Support</h6>
               <ul className="list-unstyled footer-links">
                 <li>
-                  <Link to="/faqs">FAQs</Link>
+                  <Link to={isAdmin ? "/admin/faqs" : "/faqs"}>FAQs</Link>
                 </li>
                 <li>
                   <a href="/Shipping">Shipping</a>
