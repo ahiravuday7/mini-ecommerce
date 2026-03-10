@@ -1,13 +1,22 @@
 import { useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import { Carousel } from "bootstrap";
 import ColorThief from "colorthief";
 import "./carousel.css";
 
 const slides = [
-  { src: "bbdsale.png", alt: "sale" },
-  { src: "mens fashion.png", alt: "mens fashion" },
-  { src: "womens fashion.png", alt: "womens fashion" },
-  { src: "toys.png", alt: "toys" },
+  { src: "bbdsale.png", alt: "sale", to: "/products?sort=bestsellers" },
+  {
+    src: "mens fashion.png",
+    alt: "mens fashion",
+    to: "/products?subcategory=Men%20Clothing",
+  },
+  {
+    src: "womens fashion.png",
+    alt: "womens fashion",
+    to: "/products?subcategory=Women%20Clothing",
+  },
+  { src: "toys.png", alt: "toys", to: "/products?category=Toys%20%26%20Games" },
 ];
 
 export default function HeroCarousel() {
@@ -98,9 +107,9 @@ export default function HeroCarousel() {
               key={s.src}
               className={`carousel-item ${i === 0 ? "active" : ""}`}
             >
-              <a href="#">
+              <Link to={s.to || "/"}>
                 <img src={s.src} alt={s.alt} className="d-block w-100" />
-              </a>
+              </Link>
               <div className="carousel-caption" />
             </div>
           ))}
