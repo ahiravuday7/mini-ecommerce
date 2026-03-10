@@ -22,7 +22,9 @@ export default function Navbar() {
   const isUserOnly = user && !user.isAdmin;
   const isShopperView = !user || !user.isAdmin;
   const isAuthPage =
-    location.pathname === "/login" || location.pathname === "/register";
+    location.pathname === "/login" ||
+    location.pathname === "/register" ||
+    location.pathname === "/forgot-password";
   const brandPath = user?.isAdmin ? "/admin" : "/";
   const [showManagementMenu, setShowManagementMenu] = useState(false);
   const managementMenuRef = useRef(null);
@@ -181,6 +183,23 @@ export default function Navbar() {
               </>
             ) : (
               <>
+                {isAuthPage && (
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary btn-sm"
+                    onClick={() =>
+                      setTheme((prevTheme) =>
+                        prevTheme === "dark" ? "light" : "dark",
+                      )
+                    }
+                    aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+                    title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+                  >
+                    <i
+                      className={`bi ${theme === "dark" ? "bi-sun-fill" : "bi-moon-stars-fill"}`}
+                    />
+                  </button>
+                )}
                 <NavLink to="/login" className={linkClass}>
                   Login
                 </NavLink>
