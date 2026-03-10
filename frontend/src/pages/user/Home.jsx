@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import Carousel from "../../components/Carousel";
 import { useCategories } from "../../context/CategoriesContext";
 import "./home.css";
+import SectionDealsHome from "../../components/SectionDealsHome";
 
 // select manual image for selected categories
 const categoryImageMap = {
@@ -116,6 +117,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+      <SectionDealsHome />
     </>
   );
 }
