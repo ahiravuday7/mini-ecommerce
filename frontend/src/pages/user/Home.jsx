@@ -5,17 +5,21 @@ import "./home.css";
 
 // select manual image for selected categories
 const categoryImageMap = {
-  Home: "/Home.png",
+  "Home & Kitchen": "/Home & Kitchen.png",
   Fashion: "/Fashion.png",
   Electronics: "/Electronics.png",
   Accessories: "/Accessories.png",
-  Books: "Books.png",
-  Sports: "/Sports.png",
+  Books: "/Books.png",
+  "Sports & Fitness": "/Sports & Fitness.png",
+  "Beauty & Skincare": "/Beauty & Skincare.png",
+  Gaming: "/Gaming.png",
+  "Pet Supplies": "/Pet Supplies.png",
+  "Toys & Games": "/Toys & Games.png",
 };
 
 // for redirect category clicked
 const getCategoryImage = (name, fallback) =>
-  categoryImageMap[name] || fallback || "/categories/default.png";
+  categoryImageMap[name] || fallback || "/vite.svg";
 
 export default function Home() {
   const navigate = useNavigate();
