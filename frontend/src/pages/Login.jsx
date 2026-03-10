@@ -11,6 +11,7 @@ export default function Login() {
 
   const [emailOrPhone, setEmailOrPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -43,16 +44,13 @@ export default function Login() {
   };
 
   return (
-    <div className="container-fluid min-vh-100 d-flex align-items-center justify-content-center  py-4">
+    <div className="container min-vh-100 d-flex align-items-center justify-content-center py-3 py-lg-2">
       <div className="row shadow-lg rounded-4 overflow-hidden login-wrapper">
         {/* Left Side */}
         <div className="col-lg-6 d-none d-lg-flex flex-column justify-content-center p-5 text-white left-panel">
-          <h1 className="fw-bold display-6">
-            Simplify management with our dashboard.
-          </h1>
+          <h1 className="fw-bold display-6">Welcome back to MiniStore.</h1>
           <p className="mt-3 mb-0">
-            Manage your e-commerce platform smoothly with our modern admin
-            dashboard.
+            Login to manage your orders, cart, and enjoy smooth online shopping.
           </p>
         </div>
 
@@ -78,14 +76,33 @@ export default function Login() {
 
             <div className="mb-3">
               <label className="form-label ">Password</label>
-              <input
-                type="password"
-                className="form-control rounded-3"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="123456"
-                required
-              />
+              <div className="input-group">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  className="form-control rounded-start-3"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  autoComplete="current-password"
+                  required
+                />
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary rounded-end-3"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
+            </div>
+
+            <div className="mb-3 text-end">
+              <Link
+                to="/forgot-password"
+                className="small text-decoration-none fw-semibold"
+              >
+                Forgot password?
+              </Link>
             </div>
 
             <button

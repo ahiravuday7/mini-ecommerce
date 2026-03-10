@@ -15,6 +15,8 @@ export default function Register() {
   const [emailOrPhone, setEmailOrPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -65,14 +67,13 @@ export default function Register() {
   };
 
   return (
-    <div className="container-fluid min-vh-100 d-flex align-items-center justify-content-center py-4">
-      <div className="row shadow-lg rounded-4 overflow-hidden login-wrapper w-100">
+    <div className="container min-vh-100 d-flex align-items-center justify-content-center py-3 py-lg-2">
+      <div className="row shadow-lg rounded-4 overflow-hidden login-wrapper">
         {/* Left Side (Same as Login) */}
         <div className="col-lg-6 d-none d-lg-flex flex-column justify-content-center p-5 text-white left-panel">
-          <h1 className="fw-bold display-6">Join us and start your journey.</h1>
+          <h1 className="fw-bold display-6">Join MiniStore today.</h1>
           <p className="mt-3 mb-0">
-            Create your account and explore a seamless shopping experience with
-            our modern e-commerce platform.
+            Create your account and start your seamless shopping journey.
           </p>
         </div>
 
@@ -90,7 +91,7 @@ export default function Register() {
                 className="form-control rounded-3"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Uday Ahirav"
+                placeholder="Enter your full name"
                 required
               />
             </div>
@@ -109,27 +110,47 @@ export default function Register() {
 
             <div className="mb-3">
               <label className="form-label">Password</label>
-              <input
-                type="password"
-                className="form-control rounded-3"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Min 8, Aa1@ format"
-                title="Minimum 8 characters, with uppercase, lowercase, number, and special character"
-                required
-              />
+              <div className="input-group">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  className="form-control rounded-start-3"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Create a password"
+                  title="Minimum 8 characters, with uppercase, lowercase, number, and special character"
+                  autoComplete="new-password"
+                  required
+                />
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary rounded-end-3"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
             </div>
 
             <div className="mb-3">
               <label className="form-label">Confirm Password</label>
-              <input
-                type="password"
-                className="form-control rounded-3"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="re-enter password"
-                required
-              />
+              <div className="input-group">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  className="form-control rounded-start-3"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Re-enter password"
+                  autoComplete="new-password"
+                  required
+                />
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary rounded-end-3"
+                  onClick={() => setShowConfirmPassword((prev) => !prev)}
+                >
+                  {showConfirmPassword ? "Hide" : "Show"}
+                </button>
+              </div>
             </div>
 
             <button

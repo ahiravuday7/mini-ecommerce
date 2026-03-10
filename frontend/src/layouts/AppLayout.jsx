@@ -11,7 +11,7 @@ export default function AppLayout() {
   //   location.pathname === "/login" || location.pathname === "/register";
 
   // Add any route here that should be full-width + no padding
-  const noPaddingRoutes = ["/login", "/register", "/"];
+  const noPaddingRoutes = ["/login", "/register", "/forgot-password", "/"];
   const isNoPaddingPage = noPaddingRoutes.includes(location.pathname);
 
   return (

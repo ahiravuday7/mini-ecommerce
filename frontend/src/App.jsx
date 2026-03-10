@@ -16,6 +16,7 @@ import About from "./pages/About";
 import Careers from "./pages/Careers";
 import Contact from "./pages/Contact";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import ForgotPassword from "./pages/ForgotPassword";
 import FAQs from "./pages/user/FAQs";
 import AdminFaqs from "./pages/admin/AdminFaqs";
 import Products from "./pages/user/Products";
@@ -70,6 +71,14 @@ export default function App() {
           element={
             <ShopperRoute guestOnly>
               <Register />
+            </ShopperRoute>
+          }
+        />
+        <Route
+          path="/forgot-password"
+          element={
+            <ShopperRoute guestOnly>
+              <ForgotPassword />
             </ShopperRoute>
           }
         />

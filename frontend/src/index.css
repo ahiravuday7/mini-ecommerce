@@ -25,9 +25,29 @@ body {
 .login-wrapper {
   width: 100%;
   max-width: 960px;
+  min-height: 540px;
 }
-.left-panel {
+/* .left-panel {
   background: linear-gradient(160deg, #714435 0%, #d4623e 100%);
+} */
+.left-panel {
+  position: relative;
+  background: linear-gradient(-45deg, #714435, #b24a2a, #d4623e, #f28b54);
+  background-size: 400% 400%;
+  animation: gradientFlow 10s ease infinite;
+  color: white;
+}
+
+@keyframes gradientFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@media (max-width: 991.98px) {
+  .login-wrapper {
+    max-width: 520px;
+    min-height: auto;
+  }
 }
 
 /* Product card page*/
