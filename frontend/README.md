@@ -1,16 +1,65 @@
-# React + Vite
+# Mini Store Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + Vite frontend for the Mini Store MERN project.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Public shopper pages: Home, Products, Product Details, FAQs, About, Contact, Returns, Shipping, Privacy Policy, Careers
+- Authentication: Register, Login, Forgot Password, session restore using cookie-based auth
+- User pages: Cart, Checkout, My Orders, Order Details, Account profile/shipping management
+- Admin pages: Dashboard, Products, Categories, FAQs, Users, User Details
+- Route protection with role-aware guards (`ShopperRoute`, `UserRoute`, `AdminRoute`)
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React 19
+- Vite 7
+- React Router DOM 7
+- Axios
+- Bootstrap 5 + Bootstrap Icons
 
-## Expanding the ESLint configuration
+## Prerequisites
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- Node.js 18+ (recommended)
+- Backend API running (default: `http://localhost:5000`)
+
+## Environment Variables
+
+Create `frontend/.env`:
+
+```env
+VITE_API_URL=http://localhost:5000
+```
+
+If your backend runs on a different host/port, update `VITE_API_URL` accordingly.
+
+## Setup & Run
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend runs on Vite default URL: `http://localhost:5173`
+
+## Available Scripts
+
+- `npm run dev` - start development server
+- `npm run build` - create production build
+- `npm run preview` - preview production build locally
+- `npm run lint` - run ESLint
+
+## Client ZIP Handoff Notes
+
+- Share the full project ZIP (`frontend` + `backend`) for easiest setup.
+- Do not include `node_modules` folders in ZIP (client should run `npm install`).
+- Keep environment values configurable. If needed, provide an `.env.example` instead of private values.
+- Ensure backend CORS allows the frontend origin and credentials (cookies), otherwise login/session will fail.
+
+## Quick Start for Client
+
+1. Unzip project.
+2. Start backend first (`cd backend && npm install && npm run dev`).
+3. Start frontend (`cd frontend && npm install && npm run dev`).
+4. Open `http://localhost:5173`.
