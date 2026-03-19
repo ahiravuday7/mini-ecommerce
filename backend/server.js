@@ -24,6 +24,32 @@ const adminUserRoutes = require("./routes/admin.user.routes");
 
 const app = express();
 
+const normalizeOrigin = (origin) => origin?.replace(/\/$/, "");
+
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  ...(process.env.CLIENT_URLS || "").split(","),
+]
+  .map((origin) => normalizeOrigin(origin?.trim()))
+  .filter(Boolean);
+
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.includes(normalizeOrigin(origin))) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
 app.set("trust proxy", 1); // important for deployed apps
 
 // General limiter (all APIs)
@@ -47,13 +73,8 @@ const loginLimiter = rateLimit({
 // Middleware
 app.use(express.json());
 app.use(cookieParser());
-
-app.use(
-  cors({
-    origin: process.env.CLIENT_URL,
-    credentials: true,
-  }),
-);
+app.use(cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
 
 // Strict only for auth routes
 app.use("/api/auth", loginLimiter);

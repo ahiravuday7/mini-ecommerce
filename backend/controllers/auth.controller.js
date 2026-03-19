@@ -1,5 +1,5 @@
 const User = require("../models/User");
-const generateToken = require("../utils/generateToken");
+const { generateToken, buildCookieOptions } = require("../utils/generateToken");
 const asyncHandler = require("../utils/asyncHandler");
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -134,8 +134,9 @@ const loginUser = asyncHandler(async (req, res) => {
 // Logout
 const logoutUser = asyncHandler(async (req, res) => {
   res.cookie("jwt", "", {
-    httpOnly: true,
+    ...buildCookieOptions(),
     expires: new Date(0),
+    maxAge: undefined,
   });
   res.json({ message: "Logged out successfully" });
 });
