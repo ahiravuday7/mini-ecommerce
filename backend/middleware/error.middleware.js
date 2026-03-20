@@ -7,7 +7,9 @@ const notFound = (req, res, next) => {
 
 const errorHandler = (err, req, res, next) => {
   let statusCode =
-    res.statusCode && res.statusCode !== 200 ? res.statusCode : 500; //ignore status 200 in error handling because it represents success, and If the status code is already set to an error code (like 400 or 404), keep it. Otherwise, default to 500 (Internal Server Error).
+    res.statusCode && res.statusCode !== 200
+      ? res.statusCode
+      : err.statusCode || err.status || 500; //ignore status 200 in error handling because it represents success, and If the status code is already set to an error code (like 400 or 404), keep it. Otherwise, default to the explicit error status or 500 (Internal Server Error).
 
   // Handle invalid Mongo ObjectId (CastError)
   // If MongoDB throws an invalid ObjectId error, convert it into a clean 404 response.
